@@ -1,3 +1,4 @@
+from hashlib import sha1
 
 
 class Square(object):
@@ -16,6 +17,10 @@ class Square(object):
     def __eq__(self, other):
         return self.file == other.file and \
             self.rank == other.rank
+
+    def __hash__(self):
+        hex_rep = sha1(self.__repr__().encode()).hexdigest()
+        return int(hex_rep, 16)
 
     @property
     def is_out_of_bounds(self):
@@ -127,19 +132,19 @@ class Piece(object):
         return [] if cant_step \
             else [new_position] + self.take_step(board, new_position, step)
 
-    def available_steps(self, board):
+    def available_steps(self, board, dont_filter=False):
         available_steps = []
         for step in self.steps:
             steps_in_that_direction = self.take_step(board, self.position, step)
             available_steps.extend(steps_in_that_direction)
 
         available_steps.extend(self.special_steps(board))
-        return self.filter(available_steps, board)
+        return self.filter(set(available_steps), board, dont_filter=dont_filter)
 
     def special_steps(self, board=None):
         return []
 
-    def filter(self, available_steps, board):
+    def filter(self, available_steps, board, dont_filter=False):
         return available_steps
 
     def square_hosts_enemy(self, square):
@@ -181,12 +186,11 @@ class Pawn(Piece):
     def in_front(self, step):
         return step in map(self.position.step, self._steps)
 
-    def filter(self, available_steps, board):
+    def filter(self, available_steps, board, dont_filter=False):
         for step in self.steps:
             front_position = board[self.position.step(step)]
             if self.square_hosts_enemy(front_position):
-                index = available_steps.index(front_position)
-                del available_steps[index]
+                available_steps.remove(front_position)
 
         return available_steps
 
@@ -220,27 +224,42 @@ class King(Piece):
     can_travel = False
     symbol = 'K'
 
-    def filter(self, available_steps, board):
+    def is_in_check(self, board):
         enemy_units = filter(lambda p: p.color != self.color,
                              board.pieces)
+        is_in_check = False
         for unit in enemy_units:
             if isinstance(unit, King):
                 continue
-            elif isinstance(unit, Pawn):
+
+            if self.position in unit.available_steps(board):
+                is_in_check = True
+                break
+
+        return is_in_check
+
+    def filter(self, available_steps, board, dont_filter=False):
+        """
+        disallow moves that would put King in check
+        """
+        if dont_filter is True:
+            return available_steps
+
+        enemy_units = filter(lambda p: p.color != self.color,
+                             board.pieces)
+        for unit in enemy_units:
+            if isinstance(unit, Pawn):
                 attack_squares = unit.special_steps(board, require_enemy_presence=False)
                 for attack in attack_squares:
                     if attack in available_steps:
-                        index = available_steps.index(attack)
-                        del available_steps[index]
+                        available_steps.remove(attack)
+
                 continue
 
-            steps = unit.available_steps(board)
-            # print(unit, steps)
+            steps = unit.available_steps(board, dont_filter=isinstance(unit, King))
             for step in steps:
                 if step in available_steps:
-                    # print(step)
-                    index = available_steps.index(step)
-                    del available_steps[index]
+                    available_steps.remove(step)
 
         return available_steps
 
