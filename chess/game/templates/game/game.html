@@ -1,12 +1,30 @@
+{% load staticfiles %}
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Chess</title>
+
+    <link rel="stylesheet" type="text/css" href="{% static 'game/css/board.css' %}" />
+
 </head>
 <body>
 
 <div class="container">
+    <h1>Chess</h1>
+
+    <div class="board">
+        {% for row in rows %}
+            <div class="row">
+                {% for column in row %}
+                    <div class="square">
+                        <span>{{ column.piece.symbol }}</span>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endfor %}
+    </div>
 
 </div>
 

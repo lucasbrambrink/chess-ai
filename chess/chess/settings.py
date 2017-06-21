@@ -120,3 +120,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.11/howto/static-files/
 
 STATIC_URL = '/static/'
+STATICFILES_DIRS = (
+    ('game', os.path.join(BASE_DIR, 'game', 'static')),
+)
+
+SHELL_PLUS_PRE_IMPORTS = (
+    ('game.utils', ('*')),
+)

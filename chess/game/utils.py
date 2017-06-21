@@ -53,7 +53,7 @@ class Board(object):
 
     @property
     def as_descending_rows(self):
-        for rank in Square.RANK[::-1]:
+        for rank in reversed(Square.RANK):
             row = [self[Square(file_, rank)]
                    for file_ in Square.FILES]
             yield row

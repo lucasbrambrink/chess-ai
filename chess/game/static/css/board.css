@@ -1,0 +1,22 @@
+.board {
+  width: 500px;
+  height: 500px;
+  border: 1px solid black;
+}
+.board div {
+  display: inline-block;
+}
+.board div.row {
+  height: 12.5%;
+  width: 100%;
+  display: block;
+}
+.board .square {
+  float: left;
+  width: 12.5%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  outline: 1px solid black;
+}

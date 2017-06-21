@@ -1,0 +1,23 @@
+
+.board {
+  width: 500px;
+  height: 500px;
+  border: 1px solid black;
+  div {
+    display: inline-block;
+    &.row {
+      height: 12.5%;
+      width: 100%;
+      display: block;
+    }
+  }
+  .square {
+    float: left;
+    width: 12.5%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    outline: 1px solid black;
+  }
+}
