@@ -63,6 +63,10 @@ class Board(object):
         return str(self.position)
 
     def __getitem__(self, item):
+        if type(item) is str:
+            assert len(item) == 2
+            item = Square(file=item[0], rank=int(item[1]))
+
         square = None
         try:
             ranks = self.position[item.file]
@@ -82,7 +86,7 @@ class Board(object):
 
 
 class Piece(object):
-    steps = []
+    STEPS = []
     relative_value = 0
     can_travel = False
     symbol = ''
@@ -94,7 +98,13 @@ class Piece(object):
         assert isinstance(position, Square)
         self.position = position
         self.color = color
-        self.original_position = position
+
+    @property
+    def steps(self):
+        if hasattr(self, '_steps'):
+            return getattr(self, '_steps')
+        return self.STEPS
+
 
     def __repr__(self):
         return '%s: %s (%s)' % (self.symbol, self.position, self.color)
@@ -106,6 +116,9 @@ class Piece(object):
                     or new_position.is_out_of_bounds \
                     or (not board_position.is_empty
                         and board_position.piece.color == self.color)
+
+        if self.square_hosts_enemy(board_position):
+            return [new_position]
 
         if not self.can_travel:
             return [] if cant_step else [new_position]
@@ -120,31 +133,59 @@ class Piece(object):
             steps_in_that_direction = self.take_step(board, self.position, step)
             available_steps.extend(steps_in_that_direction)
 
+        available_steps.extend(self.special_steps(board))
+        return self.filter(available_steps, board)
+
+    def special_steps(self, board=None):
+        return []
+
+    def filter(self, available_steps, board):
         return available_steps
 
-
-
-
+    def square_hosts_enemy(self, square):
+        return square is not None and \
+                not square.is_empty and \
+                    square.piece.color != self.color
 
 class Pawn(Piece):
-    steps = [(0, 1)]
+    STEPS = [(0, 1)]
     relative_value = 1
     can_travel = False
     symbol = 'P'
 
-    # @property
-    # def steps(self):
-    #     return [(0, 1)] if self.has_moved else [(0, 1), (0, 2)]
+    @property
+    def _steps(self):
+        direction = 1 if self.color == self.WHITE else -1
+        return [(0, 1 * direction)] if not self.has_moved else [(0, 1 * direction), (0, 2 * direction)]
 
     @property
     def has_moved(self):
         initial_rank = 2 if self.color == Piece.WHITE else 7
         return self.position.rank == initial_rank
 
+    def special_steps(self, board=None):
+        steps = []
+        top_left = board[self.position.step((-1, 1))]
+        top_right = board[self.position.step((1, 1))]
+        for attack_square in filter(None, (top_left, top_right)):
+            if self.square_hosts_enemy(attack_square):
+                steps.append(attack_square)
+
+        return steps
+
+    def filter(self, available_steps, board):
+        for step in self.steps:
+            front_position = board[self.position.step(step)]
+            if self.square_hosts_enemy(front_position):
+                index = available_steps.index(front_position)
+                del available_steps[index]
+
+        return available_steps
+
 
 class Knight(Piece):
     relative_value = 3
-    steps = [(1, 2), (-1, 2), (1, -2), (-1, -2),
+    STEPS = [(1, 2), (-1, 2), (1, -2), (-1, -2),
              (2, 1), (-2, 1), (2, -1), (-2, -1)]
     can_travel = False
     symbol = 'N'
@@ -152,29 +193,46 @@ class Knight(Piece):
 
 class Bishop(Piece):
     relative_value = 3
-    steps = [(1, 1), (-1, 1), (-1, -1), (1, -1)]
+    STEPS = [(1, 1), (-1, 1), (-1, -1), (1, -1)]
     can_travel = True
     symbol = 'B'
 
 
 class Rook(Piece):
     relative_value = 5
-    steps = [(1, 0), (-1, 0), (0, 1), (0, -1)]
+    STEPS = [(1, 0), (-1, 0), (0, 1), (0, -1)]
     can_travel = True
     symbol = 'R'
 
 
 class King(Piece):
     relative_value = 100
-    steps = [(1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1),
+    STEPS = [(1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1),
              (0, -1), (1, -1), (1, 0), (1, 1), ]
     can_travel = False
     symbol = 'K'
 
+    def filter(self, available_steps, board):
+        enemy_units = filter(lambda p: p.color != self.color,
+                             board.pieces)
+        for unit in enemy_units:
+            if unit.symbol == King.symbol:
+                continue
+
+            steps = unit.available_steps(board)
+            print(unit, steps)
+            for step in steps:
+                if step in available_steps:
+                    print(step)
+                    index = available_steps.index(step)
+                    del available_steps[index]
+
+        return available_steps
+
 
 class Queen(Piece):
     relative_value = 9
-    steps = [(1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1),
+    STEPS = [(1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1),
              (0, -1), (1, -1), (1, 0), (1, 1),]
     can_travel = True
     symbol = 'Q'

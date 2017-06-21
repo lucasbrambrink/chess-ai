@@ -49,3 +49,7 @@ class Game(object):
         self.board[piece.position].piece = None
         piece.position = square
         self.board[piece.position] = piece
+        print(self)
+
+
+
