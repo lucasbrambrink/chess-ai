@@ -11,6 +11,18 @@
   width: 100%;
   display: block;
 }
+.board div.row:nth-child(odd) .square:nth-child(odd) {
+  background-color: #b4b4b4;
+}
+.board div.row:nth-child(odd) .square:nth-child(even) {
+  background-color: #fafafa;
+}
+.board div.row:nth-child(even) .square:nth-child(odd) {
+  background-color: #fafafa;
+}
+.board div.row:nth-child(even) .square:nth-child(even) {
+  background-color: #b4b4b4;
+}
 .board .square {
   float: left;
   width: 12.5%;

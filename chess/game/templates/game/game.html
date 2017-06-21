@@ -13,6 +13,11 @@
 
 <div class="container">
     <h1>Chess</h1>
+    <form method="post">
+        {{ csrf_token }}
+        <input type="text" placeholder="Command"/>
+        <input type="submit">
+    </form>
 
     <div class="board">
         {% for row in rows %}

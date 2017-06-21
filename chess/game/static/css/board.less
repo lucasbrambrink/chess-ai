@@ -1,3 +1,5 @@
+@black-square: rgb(180, 180, 180);
+@white-square: rgb(250, 250, 250);
 
 .board {
   width: 500px;
@@ -9,6 +11,22 @@
       height: 12.5%;
       width: 100%;
       display: block;
+      &:nth-child(odd) {
+        .square:nth-child(odd) {
+          background-color: @black-square;
+        }
+        .square:nth-child(even) {
+          background-color: @white-square;
+        }
+      }
+      &:nth-child(even) {
+        .square:nth-child(odd) {
+          background-color: @white-square;
+        }
+        .square:nth-child(even) {
+          background-color: @black-square;
+        }
+      }
     }
   }
   .square {
