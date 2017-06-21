@@ -147,6 +147,7 @@ class Piece(object):
                 not square.is_empty and \
                     square.piece.color != self.color
 
+
 class Pawn(Piece):
     STEPS = [(0, 1)]
     relative_value = 1
@@ -154,24 +155,31 @@ class Pawn(Piece):
     symbol = 'P'
 
     @property
+    def direction(self):
+        return 1 if self.color == self.WHITE else -1
+
+    @property
     def _steps(self):
-        direction = 1 if self.color == self.WHITE else -1
-        return [(0, 1 * direction)] if not self.has_moved else [(0, 1 * direction), (0, 2 * direction)]
+        return [(0, 1 * self.direction)] if not self.has_moved \
+            else [(0, 1 * self.direction), (0, 2 * self.direction)]
 
     @property
     def has_moved(self):
         initial_rank = 2 if self.color == Piece.WHITE else 7
         return self.position.rank == initial_rank
 
-    def special_steps(self, board=None):
+    def special_steps(self, board=None, require_enemy_presence=True):
         steps = []
-        top_left = board[self.position.step((-1, 1))]
-        top_right = board[self.position.step((1, 1))]
+        top_left = board[self.position.step((-1, 1 * self.direction))]
+        top_right = board[self.position.step((1, 1 * self.direction))]
         for attack_square in filter(None, (top_left, top_right)):
-            if self.square_hosts_enemy(attack_square):
+            if self.square_hosts_enemy(attack_square) or not require_enemy_presence:
                 steps.append(attack_square)
 
         return steps
+
+    def in_front(self, step):
+        return step in map(self.position.step, self._steps)
 
     def filter(self, available_steps, board):
         for step in self.steps:
@@ -216,14 +224,21 @@ class King(Piece):
         enemy_units = filter(lambda p: p.color != self.color,
                              board.pieces)
         for unit in enemy_units:
-            if unit.symbol == King.symbol:
+            if isinstance(unit, King):
+                continue
+            elif isinstance(unit, Pawn):
+                attack_squares = unit.special_steps(board, require_enemy_presence=False)
+                for attack in attack_squares:
+                    if attack in available_steps:
+                        index = available_steps.index(attack)
+                        del available_steps[index]
                 continue
 
             steps = unit.available_steps(board)
-            print(unit, steps)
+            # print(unit, steps)
             for step in steps:
                 if step in available_steps:
-                    print(step)
+                    # print(step)
                     index = available_steps.index(step)
                     del available_steps[index]
 

@@ -52,4 +52,15 @@ class Game(object):
         print(self)
 
 
+class Runtime(models.Model):
+    name = models.CharField(max_length=255)
 
+    @classmethod
+    def run(cls):
+        game = Game()
+        game.step('e4', 'W')
+        game.step('Ke2', 'W')
+        game.step('Ke3', 'W')
+        game.step('Kd4', 'W')
+        game.step('Kd5', 'W')
+        return game
