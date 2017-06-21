@@ -39,26 +39,6 @@ class Square(object):
         return self.__class__(file_, rank)
 
 
-# class SquareList(object):
-#
-#     def __init__(self, *args):
-#         self.list = [s for s in args]
-#
-#     def __repr__(self):
-#         return str(self.list)
-#
-#     def __iter__(self):
-#         for s in self.list:
-#             yield s
-#
-#     def __contains__(self, item):
-#         for s in self.list:
-#             if s == item:
-#                 return True
-#
-#         return False
-
-
 class Board(object):
     """dict of files"""
 
