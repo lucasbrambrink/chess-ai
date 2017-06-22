@@ -2,9 +2,6 @@ from django.db import models
 from hashlib import sha1
 from os import urandom
 from .utils import *
-# Create your models here.
-
-
 
 
 class Game(object):
@@ -22,17 +19,21 @@ class Game(object):
     def __init__(self):
         self.board = Board()
         self.id = self.assign_id()
-        self.last_move_color = Piece.BLACK
+        self.last_color_played = Piece.BLACK
         for color in Piece.COLORS:
             for i, set_of_pieces in enumerate((self.FIRST_RANK,
                                                self.SECOND_RANK)):
                 rank = i + 1 if color == Piece.WHITE else 8 - i
                 self.initialize_rank(set_of_pieces, color, rank)
 
+    def __iter__(self):
+        yield ('id', self.id)
+        yield ('last_color_played', self.last_color_played)
+
     @property
     def next_color(self):
-        next_ = Piece.BLACK if self.last_move_color == Piece.WHITE else Piece.WHITE
-        self.last_move_color = next_
+        next_ = Piece.BLACK if self.last_color_played == Piece.WHITE else Piece.WHITE
+        self.last_color_played = next_
         return next_
 
     def initialize_rank(self, set_of_pieces, color, rank):

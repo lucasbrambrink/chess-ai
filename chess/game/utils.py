@@ -11,6 +11,10 @@ class Square(object):
         self.rank = rank
         self.piece = piece
 
+    def __iter__(self):
+        yield ('position', self.__repr__())
+
+
     def __repr__(self):
         return '%s%s' % (self.file, self.rank)
 
@@ -104,6 +108,11 @@ class Piece(object):
         self.position = position
         self.color = color
 
+    def __iter__(self):
+        yield ('symbol', self.symbol)
+        yield ('position', str(self.position))
+        yield ('color', self.color)
+
     @property
     def steps(self):
         if hasattr(self, '_steps'):
@@ -126,15 +135,15 @@ class Piece(object):
                     or (not board_position.is_empty
                         and board_position.piece.color == self.color)
 
-        if self.square_hosts_enemy(board_position):
+        if cant_step:
+            return []
+
+        if self.square_hosts_enemy(board_position) or \
+                not self.can_travel:
             return [new_position]
 
-        if not self.can_travel:
-            return [] if cant_step else [new_position]
-
         # step recursively until direction is exhausted
-        return [] if cant_step \
-            else [new_position] + self.take_step(board, new_position, step)
+        return [new_position] + self.take_step(board, new_position, step)
 
     def available_steps(self, board, dont_filter=False, allow_special_steps=True):
         available_steps = []

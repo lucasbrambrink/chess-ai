@@ -13,19 +13,23 @@
 
 <div class="container">
     <h1>Chess</h1>
-    <form method="post">
+    <form method="post" action="{{ submit_url }}">
         {% csrf_token %}
         {{ command_form }}
+        <input type="hidden" id="color" value="{{ color }}">
         <input type="submit">
     </form>
 
-    <div class="board">
+    <div id="board" class="board" data-id="{{ game_id }}">
         {% for row in rows %}
             <div class="row">
                 {% for column in row %}
-                    <div class="square {{ column.piece.name }}">
-                        {% include 'game/sprite.html' %}
-                        <span>{{ column.piece.symbol }}</span>
+                    <div class="square"
+                         data-position="{{column}}"
+                         data-piece="{{column.piece.symbol}}">
+                        <span>
+                            {% include 'game/sprite.html' with key=column.piece.name %}
+                        </span>
                     </div>
                 {% endfor %}
             </div>
@@ -34,5 +38,14 @@
 
 </div>
 
+<template id="square">
+    <div>
+        <div>TestTest</div>
+    </div>
+</template>
+
 </body>
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+<script src="https://unpkg.com/vue/dist/vue.js"></script>
+<script type="text/javascript" src="{% static 'game/js/main.js' %}"></script>
 </html>
