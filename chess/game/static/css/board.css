@@ -1,3 +1,44 @@
+svg {
+  width: 20px;
+  height: 20px;
+  visibility: hidden;
+}
+.white_king #white_king {
+  visibility: visible;
+}
+.white_queen #white_queen {
+  visibility: visible;
+}
+.white_bishop #white_bishop {
+  visibility: visible;
+}
+.white_knight #white_knight {
+  visibility: visible;
+}
+.white_rook #white_rook {
+  visibility: visible;
+}
+.white_pawn #white_pawn {
+  visibility: visible;
+}
+.black_king #black_king {
+  visibility: visible;
+}
+.black_queen #black_queen {
+  visibility: visible;
+}
+.black_bishop #black_bishop {
+  visibility: visible;
+}
+.black_knight #black_knight {
+  visibility: visible;
+}
+.black_rook #black_rook {
+  visibility: visible;
+}
+.black_pawn #black_pawn {
+  visibility: visible;
+}
 .board {
   width: 500px;
   height: 500px;

@@ -110,6 +110,10 @@ class Piece(object):
             return getattr(self, '_steps')
         return self.STEPS
 
+    @property
+    def name(self):
+        color = 'white' if self.color == self.WHITE else 'black'
+        return '{}_{}'.format(color, self.__class__.__name__.lower())
 
     def __repr__(self):
         return '%s: %s (%s)' % (self.symbol, self.position, self.color)
@@ -132,13 +136,13 @@ class Piece(object):
         return [] if cant_step \
             else [new_position] + self.take_step(board, new_position, step)
 
-    def available_steps(self, board, dont_filter=False):
+    def available_steps(self, board, dont_filter=False, allow_special_steps=True):
         available_steps = []
         for step in self.steps:
             steps_in_that_direction = self.take_step(board, self.position, step)
             available_steps.extend(steps_in_that_direction)
-
-        available_steps.extend(self.special_steps(board))
+        if allow_special_steps:
+            available_steps.extend(self.special_steps(board))
         return self.filter(set(available_steps), board, dont_filter=dont_filter)
 
     def special_steps(self, board=None):
@@ -277,6 +281,9 @@ class CommandParser(object):
 
     @classmethod
     def __call__(self, command):
+        is_attack_move = 'x' in command
+        special_file = None
+        special_rank = None
         if len(command) == 2:
             symbol = Pawn.symbol
             square = Square(command[0], int(command[1]))
@@ -287,9 +294,23 @@ class CommandParser(object):
 
         elif len(command) == 4:
             symbol = command[0]
+            if not is_attack_move:
+                special_file = command[1]
             square = Square(command[2], int(command[3]))
-
+        elif len(command) == 5:
+            symbol = command[0]
+            if not is_attack_move:
+                special_file = command[1]
+                special_rank = command[2]
+            else:
+                special_file = command[1]
+            square = Square(command[3], int(command[4]))
+        elif is_attack_move and len(command) == 6:
+            symbol = command[0]
+            special_file = command[1]
+            special_rank = command[2]
+            square = Square(command[4], int(command[5]))
         else:
             raise ValueError('Wrong command')
 
-        return symbol, square
+        return symbol, square, is_attack_move, special_file, special_rank

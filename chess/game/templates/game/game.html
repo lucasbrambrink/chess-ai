@@ -14,8 +14,8 @@
 <div class="container">
     <h1>Chess</h1>
     <form method="post">
-        {{ csrf_token }}
-        <input type="text" placeholder="Command"/>
+        {% csrf_token %}
+        {{ command_form }}
         <input type="submit">
     </form>
 
@@ -23,7 +23,8 @@
         {% for row in rows %}
             <div class="row">
                 {% for column in row %}
-                    <div class="square">
+                    <div class="square {{ column.piece.name }}">
+                        {% include 'game/sprite.html' %}
                         <span>{{ column.piece.symbol }}</span>
                     </div>
                 {% endfor %}

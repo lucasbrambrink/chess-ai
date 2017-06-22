@@ -1,4 +1,6 @@
 from django.db import models
+from hashlib import sha1
+from os import urandom
 from .utils import *
 # Create your models here.
 
@@ -13,13 +15,25 @@ class Game(object):
         Rook, Knight, Bishop, Queen, King, Bishop, Knight, Rook
     )
 
+    def assign_id(self):
+        id = sha1(urandom(5)).hexdigest()[:10]
+        return id
+
     def __init__(self):
         self.board = Board()
+        self.id = self.assign_id()
+        self.last_move_color = Piece.BLACK
         for color in Piece.COLORS:
             for i, set_of_pieces in enumerate((self.FIRST_RANK,
                                                self.SECOND_RANK)):
                 rank = i + 1 if color == Piece.WHITE else 8 - i
                 self.initialize_rank(set_of_pieces, color, rank)
+
+    @property
+    def next_color(self):
+        next_ = Piece.BLACK if self.last_move_color == Piece.WHITE else Piece.WHITE
+        self.last_move_color = next_
+        return next_
 
     def initialize_rank(self, set_of_pieces, color, rank):
         for file_, piece in zip(Square.FILES, set_of_pieces):
@@ -36,11 +50,23 @@ class Game(object):
         return ''.join(rows_as_strings)
 
     def step(self, command, color):
-        symbol, square = CommandParser.__call__(command)
-        possible_pieces = [piece for piece in self.board.pieces
+        args = CommandParser.__call__(command)
+        symbol, square, is_attack_move, special_file, special_rank = args
+        all_pieces = self.board.pieces
+        if special_file is not None:
+            all_pieces = filter(lambda p: p.position.file == special_file,
+                                all_pieces)
+            if special_rank is not None:
+                all_pieces = filter(lambda p: p.position.rank == special_rank,
+                                    all_pieces)
+
+        possible_pieces = [piece for piece in all_pieces
                            if (piece.color == color and
                                piece.symbol == symbol and
-                               square in piece.available_steps(self.board))]
+                               square in piece.available_steps(self.board,
+                                                               allow_special_steps=is_attack_move)
+                               )
+                           ]
         if len(possible_pieces) != 1:
             print(possible_pieces)
             raise ValueError('That command is ambiguous')
