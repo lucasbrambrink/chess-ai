@@ -34,6 +34,7 @@ class Game(object):
         self.last_color_played = Piece.BLACK
         # initialize player keys
         keys = self.generate_player_keys()
+        self.player_keys = keys
         self.white_player_key = keys[Piece.WHITE]
         self.black_player_key = keys[Piece.BLACK]
 
@@ -95,15 +96,9 @@ class Game(object):
         self.board[piece.position] = piece
 
 
-class Runtime(models.Model):
-    name = models.CharField(max_length=255)
-
-    @classmethod
-    def run(cls):
-        game = Game()
-        game.step('e4', 'W')
-        game.step('Ke2', 'W')
-        game.step('Ke3', 'W')
-        game.step('Kd4', 'W')
-        game.step('Kd5', 'W')
-        return game
+class GameInstance(models.Model):
+    game_id = models.CharField(max_length=255)
+    last_color_played = models.CharField(max_length=2)
+    white_player_key = models.CharField(max_length=255)
+    black_player_key = models.CharField(max_length=255)
+    board = models.TextField()

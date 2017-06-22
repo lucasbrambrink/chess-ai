@@ -1,10 +1,13 @@
-
+import random
 from django.shortcuts import render, reverse, redirect
 from django.views.generic import TemplateView, RedirectView, View
-from .models import Game
+from .models import Game, Piece
 from .forms import CommandForm
 from django.core.cache import cache
 from django.http import JsonResponse
+
+
+PLAYER_KEY = 'player_key'
 
 
 class InitGameView(RedirectView):
@@ -12,6 +15,8 @@ class InitGameView(RedirectView):
 
     def get_redirect_url(self, *args, **kwargs):
         game = Game()
+        playing_as = random.choice(Piece.COLORS)
+        # self.request.session[PLAYER_KEY] = game.keys.get(playing_as)
         cache.set(game.id, game)
         return reverse('live', args=(game.id,))
 
@@ -55,7 +60,12 @@ class SubmitMoveView(View):
         form = CommandForm(request.POST)
         if form.is_valid():
             try:
-                game.step(form.cleaned_data['command'], game.next_color)
+                # player_key = request.session[PLAYER_KEY]
+                import ipdb; ipdb.set_trace()
+                # game.step(form.cleaned_data['command'], game.next_color)
+            except KeyError:
+                print('Unauthenticated player')
+                pass
             except ValueError:
                 _ = game.next_color
                 pass
