@@ -1,5 +1,6 @@
 from django.db import models
-from hashlib import sha1
+from hashlib import sha256
+from datetime import datetime
 from os import urandom
 from .utils import *
 
@@ -13,13 +14,29 @@ class Game(object):
     )
 
     def assign_id(self):
-        id = sha1(urandom(5)).hexdigest()[:10]
+        id = sha256(urandom(5)).hexdigest()[:10]
         return id
+
+    def generate_player_keys(self):
+        timestamp = str(datetime.now())
+        salt = str(urandom(5))
+        keys = {}
+        for color in (Piece.COLORS):
+            key_string = '%s%s%s' % (salt, timestamp, color)
+            hash_ = sha256(key_string.encode()).hexdigest()
+            keys[color] = hash_
+
+        return keys
 
     def __init__(self):
         self.board = Board()
         self.id = self.assign_id()
         self.last_color_played = Piece.BLACK
+        # initialize player keys
+        keys = self.generate_player_keys()
+        self.white_player_key = keys[Piece.WHITE]
+        self.black_player_key = keys[Piece.BLACK]
+
         for color in Piece.COLORS:
             for i, set_of_pieces in enumerate((self.FIRST_RANK,
                                                self.SECOND_RANK)):
@@ -76,7 +93,6 @@ class Game(object):
         self.board[piece.position].piece = None
         piece.position = square
         self.board[piece.position] = piece
-        print(self)
 
 
 class Runtime(models.Model):

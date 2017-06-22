@@ -32,7 +32,6 @@ function set_available(piece) {
     for (var i = 0; i < piece.available_moves.length; i++) {
         square = $('.square[data-position=' + piece.available_moves[i] + ']');
         square.addClass('available');
-
     }
 }
 

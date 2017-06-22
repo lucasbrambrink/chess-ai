@@ -12,28 +12,30 @@
 <body>
 
 <div class="container">
-    <h1>Chess</h1>
-    <form method="post" action="{{ submit_url }}">
-        {% csrf_token %}
-        {{ command_form }}
-        <input type="hidden" id="color" value="{{ color }}">
-        <input type="submit">
-    </form>
+    <div class="game-container">
+        <h1>Chess</h1>
+        <form method="post" action="{{ submit_url }}">
+            {% csrf_token %}
+            {{ command_form }}
+            <input type="hidden" id="color" value="{{ color }}">
+            <input type="submit">
+        </form>
 
-    <div id="board" class="board" data-id="{{ game_id }}">
-        {% for row in rows %}
-            <div class="row">
-                {% for column in row %}
-                    <div class="square"
-                         data-position="{{column}}"
-                         data-piece="{{column.piece.symbol}}">
-                        <span>
-                            {% include 'game/sprite.html' with key=column.piece.name %}
-                        </span>
-                    </div>
-                {% endfor %}
-            </div>
-        {% endfor %}
+        <div id="board" class="board" data-id="{{ game_id }}">
+            {% for row in rows %}
+                <div class="row">
+                    {% for column in row %}
+                        <div class="square"
+                             data-position="{{column}}"
+                             data-piece="{{column.piece.symbol}}">
+                            <span>
+                                {% include 'game/sprite.html' with key=column.piece.name %}
+                            </span>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endfor %}
+        </div>
     </div>
 
 </div>
