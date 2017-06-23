@@ -2,6 +2,8 @@ from django.db import models
 from hashlib import sha256
 from datetime import datetime
 from os import urandom
+from django.contrib.postgres.fields import JSONField
+import json
 from .utils import *
 from .api.v0.serializers import GameSerializer
 
@@ -101,11 +103,26 @@ class Game(object):
 
         return (False, None)
 
+    def save(self):
+        instance = GameInstance.load_from(self.serialized)
+        instance.save()
+
 
 class GameInstance(models.Model):
     game_id = models.CharField(max_length=255)
     last_color_played = models.CharField(max_length=2)
-    white_player_key = models.CharField(max_length=255)
-    black_player_key = models.CharField(max_length=255)
-    board = models.TextField()
+    player_keys = JSONField()
+    board = JSONField()
+
+    @classmethod
+    def load_from(cls, game):
+        if isinstance(game, Game):
+            game = game.serialized
+        else:
+            assert type(game) is dict
+        instance = cls(game_id=game['id'],
+                       last_color_played=game['last_color_played'],
+                       player_keys=game['player_keys'],
+                       board=game['board'])
+        return instance
 

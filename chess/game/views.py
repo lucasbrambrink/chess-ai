@@ -4,7 +4,7 @@ import logging
 from django.shortcuts import render, reverse, redirect
 from django.views.generic import TemplateView, RedirectView, View
 from django.http.response import HttpResponseRedirect, HttpResponseNotAllowed
-from .models import Game, Piece
+from .models import Game, GameInstance
 from .forms import CommandForm, InitGameForm
 from django.core.cache import cache
 from django.http import JsonResponse
@@ -19,6 +19,7 @@ class NewGameRedirect(RedirectView):
     def get_redirect_url(self, *args, **kwargs):
         game = Game()
         cache.set(game.id, game)
+        game.save()
         return reverse('pick_color', args=(game.id,))
 
 
@@ -38,7 +39,11 @@ class InitGameView(TemplateView):
         color = form.data.get('color')
         game = cache.get(game_id)
         if game is None:
-            raise ValueError()
+            try:
+                game_instance = GameInstance.objects.get(game_id=game_id)
+                game = Game.initialize_from_dict(game_instance.__dict__)
+            except GameInstance.DoesNotExist:
+                raise ValueError()
 
         request.session[PLAYER_KEY] = game.player_keys[color]
         return HttpResponseRedirect(reverse('live', args=(game_id, color)))
@@ -60,8 +65,13 @@ class GameView(TemplateView):
         color = kwargs.get('color')
         game = cache.get(game_id)
         if game is None:
-            raise ValueError('The game is not in cache!')
+            try:
+                game_instance = GameInstance.objects.get(game_id=game_id)
+                game = Game.initialize_from_dict(game_instance.__dict__)
+            except GameInstance.DoesNotExist:
+                raise ValueError('That game doesnt exist anywhere')
 
+        game.save()
         context = super(GameView, self).get_context_data(**kwargs)
         context['rows'] = game.board.as_descending_rows
         form = CommandForm()
