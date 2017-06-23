@@ -7,7 +7,7 @@
             <h3>{{ is_in_check }} is in check!</h3>
         {% endif %}
         {% if is_check_mate %}
-            <h1>GAME OVER! CHECKMATE! </h1>
+            <h1>CHECKMATE! GAME OVER! </h1>
         {% endif %}
     <form class="move" method="post" action="{{ submit_url }}">
         {% csrf_token %}
