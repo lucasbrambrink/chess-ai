@@ -3,8 +3,11 @@
 {% block container %}
 <div class="game-container">
     <h1>Chess</h1>
-    {% if is_in_check %}
-            <h3>{{ is_in_check }}</h3>
+        {% if is_in_check %}
+            <h3>{{ is_in_check }} is in check!</h3>
+        {% endif %}
+        {% if is_check_mate %}
+            <h1>GAME OVER! CHECKMATE! </h1>
         {% endif %}
     <form class="move" method="post" action="{{ submit_url }}">
         {% csrf_token %}
@@ -17,13 +20,20 @@
         {% for row in rows %}
             <div class="row">
                 {% for column in row %}
-                    <div class="square"
-                         data-position="{{column}}"
-                         data-piece="{{column.piece.symbol}}">
-                        <span>
-                            {% include 'game/sprite.html' with key=column.piece.name %}
-                        </span>
-                    </div>
+                    {% if column.piece %}
+                        <div class="square"
+                             data-position="{{column}}"
+                             data-piece="{{column.piece.symbol}}">
+                            <span>
+                                {% include 'game/sprite.html' with key=column.piece.name %}
+                            </span>
+                        </div>
+                    {% else %}
+                        <div class="square"
+                             data-position="{{column}}"
+                             data-piece="">
+                        </div>
+                    {% endif %}
                 {% endfor %}
             </div>
         {% endfor %}

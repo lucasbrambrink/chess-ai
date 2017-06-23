@@ -104,9 +104,37 @@ class Board(object):
         square.piece = value
 
     def get_king(self, color):
-        king = filter(lambda p: p.color == color and p.symbol == King.symbol,
-                      self.pieces)
-        return next(king)
+        king = next((p for p in self.pieces
+                     if p.color == color and p.symbol == King.symbol))
+        assert king is not None and isinstance(king, King)
+        return king
+
+    def step(self, command, color):
+        args = CommandParser.__call__(command)
+        symbol, square, is_attack_move, special_file, special_rank = args
+        all_pieces = self.pieces
+        if special_file is not None:
+            all_pieces = filter(lambda p: p.position.file == special_file,
+                                all_pieces)
+            if special_rank is not None:
+                all_pieces = filter(lambda p: p.position.rank == special_rank,
+                                    all_pieces)
+
+        possible_pieces = [piece for piece in all_pieces
+                           if (piece.color == color and
+                               piece.symbol == symbol and
+                               square in piece.available_steps(self,
+                                                               allow_special_steps=is_attack_move)
+                               )
+                           ]
+        if len(possible_pieces) != 1:
+            print(possible_pieces)
+            raise ValueError('That command is ambiguous')
+
+        piece = possible_pieces[0]
+        self[piece.position].piece = None
+        piece.position = square
+        self[piece.position] = piece
 
 
 class Piece(object):
@@ -135,9 +163,13 @@ class Piece(object):
         return self.STEPS
 
     @property
+    def color_canonical(self):
+        return 'white' if self.color == self.WHITE else 'black'
+
+    @property
     def name(self):
-        color = 'white' if self.color == self.WHITE else 'black'
-        return '{}_{}'.format(color, self.__class__.__name__.lower())
+        return '{}_{}'.format(self.color_canonical,
+                              self.__class__.__name__.lower())
 
     def __repr__(self):
         return '%s: %s (%s)' % (self.symbol, self.position, self.color)
@@ -175,8 +207,7 @@ class Piece(object):
     def filter(self, available_steps, board, dont_filter=False):
         return available_steps
 
-    def get_step(self, step):
-        new_position = self.position.step(step)
+    def get_step(self, new_position):
         return '%s%s' % (self.symbol, new_position)
 
 
@@ -278,9 +309,9 @@ class King(Piece):
 
         # check if any available move leads to a state where king is no longer in check
         for unit in friendly_units:
-            for step in unit.available_steps(board):
+            for available_step in unit.available_steps(board):
                 hypothetical_board = deepcopy(board)
-                hypothetical_board.step(self.get_step(step))
+                hypothetical_board.step(unit.get_step(available_step), self.color)
                 king = hypothetical_board.get_king(self.color)
                 if not king.is_in_check(hypothetical_board):
                     return False

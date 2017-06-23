@@ -67,7 +67,7 @@ $(document).ready(function() {
             var piece = $('.active').data('piece');
             var newPosition = $(this).data('position');
             $('input[name=command]').val(piece + newPosition);
-            $('form').submit();
+            $('form.move').submit();
         }
 
         $('.square').not(this).removeClass('active');

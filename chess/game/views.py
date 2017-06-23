@@ -1,4 +1,6 @@
-import random
+import logging
+
+
 from django.shortcuts import render, reverse, redirect
 from django.views.generic import TemplateView, RedirectView, View
 from django.http.response import HttpResponseRedirect, HttpResponseNotAllowed
@@ -7,7 +9,7 @@ from .forms import CommandForm, InitGameForm
 from django.core.cache import cache
 from django.http import JsonResponse
 
-
+log = logging.getLogger(__name__)
 PLAYER_KEY = 'player_key'
 
 
@@ -68,7 +70,11 @@ class GameView(TemplateView):
         context['color'] = game.last_color_played
         context['game_id'] = game.id
         is_in_check, piece = game.king_is_in_check()
-        context['is_in_check'] = piece
+        is_check_mate = False
+        if is_in_check:
+            is_check_mate = piece.is_check_mate(game.board)
+        context['is_in_check'] = None if not piece else piece.color_canonical
+        context['is_check_mate'] = is_check_mate
         context['submit_url'] = reverse('live_post', args=(game.id, color))
         return context
 
@@ -82,6 +88,7 @@ class SubmitMoveView(View):
 
         redirect_response = redirect(reverse('live', args=(game.id, color)))
         if game.last_color_played == color:
+            log.info('It is not your turn!')
             return redirect_response
 
         form = CommandForm(request.POST)
@@ -89,15 +96,19 @@ class SubmitMoveView(View):
             try:
                 player_key = request.session[PLAYER_KEY]
                 if player_key != game.player_keys[color]:
+                    log.error('Wrong player key... %s vs %s' % (player_key, game.player_keys[color]))
                     return HttpResponseNotAllowed('You should not do that.')
-                # import ipdb; ipdb.set_trace()
-                game.step(form.cleaned_data['command'], game.next_color)
+                game.board.step(form.cleaned_data['command'], game.next_color)
             except KeyError:
+                log.error('Unassigned player key!')
                 return HttpResponseNotAllowed('You should not do that.')
             except ValueError:
+                log.warning('That move was not recognized')
                 _ = game.next_color
                 pass
             cache.set(game.id, game)
+        else:
+            log.warning('Form is not valid!')
 
         return redirect_response
 
