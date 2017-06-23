@@ -54,6 +54,6 @@ svg {
 .available:hover {
   background-color: #f5871e !important;
 }
-form input {
+form.move input {
   display: none;
 }

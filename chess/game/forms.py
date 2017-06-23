@@ -3,7 +3,11 @@ from .models import Piece
 
 
 class InitGameForm(forms.Form):
-    color = forms.BooleanField(label='Color')
+    COLORS = (
+        (Piece.WHITE, 'White'),
+        (Piece.BLACK, 'Black')
+    )
+    color = forms.ChoiceField(choices=COLORS)
 
 
 class CommandForm(forms.Form):
