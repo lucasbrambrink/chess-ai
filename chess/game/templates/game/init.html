@@ -1,0 +1,15 @@
+{% extends 'game/base.html' %}
+
+{% block container %}
+<div class="container">
+    <div class="game-container">
+        <h1>Chess</h1>
+        <form method="post">
+            {% csrf_token %}
+            {{ init_form }}
+            <input type="submit">
+        </form>
+    </div>
+
+</div>
+{% endblock %}

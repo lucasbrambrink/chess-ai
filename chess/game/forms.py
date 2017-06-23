@@ -2,6 +2,15 @@ from django import forms
 from .models import Piece
 
 
+class InitGameForm(forms.Form):
+    COLORS = (
+        (Piece.WHITE, 'White'),
+        (Piece.BLACK, 'Black')
+    )
+    color = forms.ChoiceField(choices=COLORS)
+
+
+
 class CommandForm(forms.Form):
     command = forms.CharField(max_length=255)
     player_key = forms.HiddenInput()

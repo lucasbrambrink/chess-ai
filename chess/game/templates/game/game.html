@@ -1,53 +1,29 @@
-{% load staticfiles %}
+{% extends 'game/base.html' %}
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Chess</title>
+{% block container %}
+<div class="game-container">
+    <h1>Chess</h1>
+    <form class="move" method="post" action="{{ submit_url }}">
+        {% csrf_token %}
+        {{ command_form }}
+        <input type="hidden" id="color" value="{{ color }}">
+        <input type="submit">
+    </form>
 
-    <link rel="stylesheet" type="text/css" href="{% static 'game/css/board.css' %}" />
-
-</head>
-<body>
-
-<div class="container">
-    <div class="game-container">
-        <h1>Chess</h1>
-        <form method="post" action="{{ submit_url }}">
-            {% csrf_token %}
-            {{ command_form }}
-            <input type="hidden" id="color" value="{{ color }}">
-            <input type="submit">
-        </form>
-
-        <div id="board" class="board" data-id="{{ game_id }}">
-            {% for row in rows %}
-                <div class="row">
-                    {% for column in row %}
-                        <div class="square"
-                             data-position="{{column}}"
-                             data-piece="{{column.piece.symbol}}">
-                            <span>
-                                {% include 'game/sprite.html' with key=column.piece.name %}
-                            </span>
-                        </div>
-                    {% endfor %}
-                </div>
-            {% endfor %}
-        </div>
+    <div id="board" class="board" data-id="{{ game_id }}">
+        {% for row in rows %}
+            <div class="row">
+                {% for column in row %}
+                    <div class="square"
+                         data-position="{{column}}"
+                         data-piece="{{column.piece.symbol}}">
+                        <span>
+                            {% include 'game/sprite.html' with key=column.piece.name %}
+                        </span>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endfor %}
     </div>
-
 </div>
-
-<template id="square">
-    <div>
-        <div>TestTest</div>
-    </div>
-</template>
-
-</body>
-<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
-<script src="https://unpkg.com/vue/dist/vue.js"></script>
-<script type="text/javascript" src="{% static 'game/js/main.js' %}"></script>
-</html>
+{% endblock %}}

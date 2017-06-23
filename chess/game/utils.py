@@ -99,8 +99,8 @@ class Piece(object):
     relative_value = 0
     can_travel = False
     symbol = ''
-    WHITE = 'W'
-    BLACK = 'B'
+    WHITE = 'w'
+    BLACK = 'b'
     COLORS = (WHITE, BLACK)
 
     def __init__(self, position, color):
