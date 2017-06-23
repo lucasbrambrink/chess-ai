@@ -1,5 +1,4 @@
 from rest_framework import serializers
-from ...models import Game
 
 import logging
 
@@ -25,7 +24,33 @@ class BoardSerializer(serializers.Serializer):
                                allow_null=True)
 
 
-class GameSerializer(serializers.Serializer):
-    id = serializers.CharField(max_length=255)
-    last_color_played = serializers.CharField(max_length=1)
-    board = BoardSerializer(read_only=True)
+# class GameSerializer(serializers.Serializer):
+#     id = serializers.CharField(max_length=255)
+#     last_color_played = serializers.CharField(max_length=1)
+#     board = BoardSerializer(read_only=True)
+
+
+class GameSerializer(object):
+
+    def __init__(self, game):
+        self.data = self.serialize(game)
+
+    @classmethod
+    def serialize(cls, game):
+        squares = []
+        for row in game.board.as_descending_rows:
+            for square in row:
+                square_dict = dict(square)
+
+                if square.piece is not None:
+                    piece = dict(square.piece)
+                    piece['available_moves'] = list(str(move) for move in
+                                                    square.piece.available_steps(game.board))
+                    square_dict['piece'] = piece
+
+                squares.append(square_dict)
+
+        board = {'squares': squares}
+        game_as_dict = dict(game)
+        game_as_dict['board'] = board
+        return game_as_dict

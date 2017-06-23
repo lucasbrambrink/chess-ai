@@ -3,6 +3,7 @@ from hashlib import sha256
 from datetime import datetime
 from os import urandom
 from .utils import *
+from .api.v0.serializers import GameSerializer
 
 
 class Game(object):
@@ -46,6 +47,33 @@ class Game(object):
         yield ('last_color_played', self.last_color_played)
 
     @property
+    def serialized(self):
+        as_dict = GameSerializer(self).data
+        as_dict['player_keys'] = self.player_keys
+        return as_dict
+
+    @classmethod
+    def initialize_from_dict(cls, game):
+        new_game = cls()
+        new_game.id = game.get('id')
+        new_game.last_color_played = game.get('last_color_played')
+        new_game.player_keys = game.get('player_keys')
+        previous_board = game.get('board')
+        for square in previous_board.get('squares', []):
+            position = square.get('position')
+            piece = square.get('piece')
+            new_piece = None
+            if piece is not None:
+                new_piece = PieceFactory.create(piece.get('symbol'),
+                                                position,
+                                                piece.get('color'))
+
+            existing_square = new_game.board[position]
+            existing_square.piece = new_piece
+
+        return new_game
+
+    @property
     def next_color(self):
         next_ = Piece.BLACK if self.last_color_played == Piece.WHITE else Piece.WHITE
         self.last_color_played = next_
@@ -80,3 +108,4 @@ class GameInstance(models.Model):
     white_player_key = models.CharField(max_length=255)
     black_player_key = models.CharField(max_length=255)
     board = models.TextField()
+

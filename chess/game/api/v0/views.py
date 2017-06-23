@@ -17,21 +17,6 @@ class GameApiView(generics.RetrieveAPIView):
         if game is None:
             return redirect('new_game')
 
-        squares = []
-        for row in game.board.as_descending_rows:
-            for square in row:
-                square_dict = dict(square)
-
-                if square.piece is not None:
-                    piece = dict(square.piece)
-                    piece['available_moves'] = list(str(move) for move in
-                                                    square.piece.available_steps(game.board))
-                    square_dict['piece'] = piece
-
-                squares.append(square_dict)
-
-        board = {'squares': squares}
-        game_as_dict = dict(game)
-        game_as_dict['board'] = board
-        return Response(game_as_dict, status=status.HTTP_200_OK)
+        return Response(serializers.GameSerializer(game).data,
+                        status=status.HTTP_200_OK)
 

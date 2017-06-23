@@ -352,6 +352,20 @@ class Queen(Piece):
     symbol = 'Q'
 
 
+class PieceFactory(object):
+    PIECES = (
+        Pawn, Rook, Knight, Bishop, Queen, King
+    )
+
+    @classmethod
+    def create(cls, symbol, position, color):
+        piece_class = next((kls for kls in cls.PIECES
+                            if kls.symbol == symbol))
+        file_, rank = position
+        piece = piece_class(Square(file_, rank), color=color)
+        return piece
+
+
 class CommandParser(object):
 
 
