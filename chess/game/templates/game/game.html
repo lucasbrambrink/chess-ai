@@ -14,6 +14,9 @@
 <div class="container">
     <div class="game-container">
         <h1>Chess</h1>
+        {% if is_in_check %}
+            <h3>{{ is_in_check }}</h3>
+        {% endif %}
         <form method="post" action="{{ submit_url }}">
             {% csrf_token %}
             {{ command_form }}

@@ -1,0 +1,39 @@
+{% load staticfiles %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Chess</title>
+
+    <link rel="stylesheet" type="text/css" href="{% static 'game/css/board.css' %}" />
+
+</head>
+<body>
+
+<div class="container">
+    <div class="game-container">
+        <h1>Chess</h1>
+        <h2>Game created! ID: {{ game_id }}</h2>
+
+        <form method="post">
+            {% csrf_token %}
+            {{ init_game_form }}
+            <input type="submit">
+        </form>
+
+    </div>
+
+</div>
+
+<template id="square">
+    <div>
+        <div>TestTest</div>
+    </div>
+</template>
+
+</body>
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+<script src="https://unpkg.com/vue/dist/vue.js"></script>
+<script type="text/javascript" src="{% static 'game/js/main.js' %}"></script>
+</html>

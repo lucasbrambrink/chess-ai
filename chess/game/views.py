@@ -46,6 +46,8 @@ class GameView(TemplateView):
         context['command_form'] = form
         context['color'] = game.last_color_played
         context['game_id'] = game.id
+        is_in_check, piece = game.king_is_in_check()
+        context['is_in_check'] = piece
         context['submit_url'] = reverse('live_post', args=(game.id,))
         return context
 

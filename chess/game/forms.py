@@ -2,6 +2,10 @@ from django import forms
 from .models import Piece
 
 
+class InitGameForm(forms.Form):
+    color = forms.BooleanField(label='Color')
+
+
 class CommandForm(forms.Form):
     command = forms.CharField(max_length=255)
     player_key = forms.HiddenInput()

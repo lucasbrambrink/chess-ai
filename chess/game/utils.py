@@ -1,4 +1,4 @@
-from hashlib import sha1
+from copy import deepcopy
 
 
 class Square(object):
@@ -23,8 +23,7 @@ class Square(object):
             self.rank == other.rank
 
     def __hash__(self):
-        hex_rep = sha1(self.__repr__().encode()).hexdigest()
-        return int(hex_rep, 16)
+        return int('%s%s' % (self.FILES.index(self.file), self.rank))
 
     @property
     def is_out_of_bounds(self):
@@ -33,6 +32,12 @@ class Square(object):
     @property
     def is_empty(self):
         return self.piece is None
+
+    @classmethod
+    def is_hosting_enemy(cls, square, color):
+        return square is not None and \
+                not square.is_empty and \
+                    square.piece.color != color
 
     def step(self, step):
         rank = self.rank + step[1]
@@ -72,9 +77,14 @@ class Board(object):
         return str(self.position)
 
     def __getitem__(self, item):
+        """
+        allow lookup via location string or Square instance
+        """
         if type(item) is str:
             assert len(item) == 2
             item = Square(file=item[0], rank=int(item[1]))
+        else:
+            assert isinstance(item, Square)
 
         square = None
         try:
@@ -92,6 +102,11 @@ class Board(object):
         assert isinstance(value, Piece)
         square = self[key]
         square.piece = value
+
+    def get_king(self, color):
+        king = filter(lambda p: p.color == color and p.symbol == King.symbol,
+                      self.pieces)
+        return next(king)
 
 
 class Piece(object):
@@ -138,7 +153,7 @@ class Piece(object):
         if cant_step:
             return []
 
-        if self.square_hosts_enemy(board_position) or \
+        if Square.is_hosting_enemy(board_position, self.color) or \
                 not self.can_travel:
             return [new_position]
 
@@ -160,10 +175,9 @@ class Piece(object):
     def filter(self, available_steps, board, dont_filter=False):
         return available_steps
 
-    def square_hosts_enemy(self, square):
-        return square is not None and \
-                not square.is_empty and \
-                    square.piece.color != self.color
+    def get_step(self, step):
+        new_position = self.position.step(step)
+        return '%s%s' % (self.symbol, new_position)
 
 
 class Pawn(Piece):
@@ -191,7 +205,7 @@ class Pawn(Piece):
         top_left = board[self.position.step((-1, 1 * self.direction))]
         top_right = board[self.position.step((1, 1 * self.direction))]
         for attack_square in filter(None, (top_left, top_right)):
-            if self.square_hosts_enemy(attack_square) or not require_enemy_presence:
+            if Square.is_hosting_enemy(attack_square, self.color) or not require_enemy_presence:
                 steps.append(attack_square)
 
         return steps
@@ -202,7 +216,7 @@ class Pawn(Piece):
     def filter(self, available_steps, board, dont_filter=False):
         for step in self.steps:
             front_position = board[self.position.step(step)]
-            if self.square_hosts_enemy(front_position):
+            if Square.is_hosting_enemy(front_position, self.color):
                 available_steps.remove(front_position)
 
         return available_steps
@@ -250,6 +264,28 @@ class King(Piece):
                 break
 
         return is_in_check
+
+    def is_check_mate(self, board):
+        is_in_check = self.is_in_check(board)
+        if not is_in_check:
+            return False
+
+        friendly_units = [unit for unit in board.pieces
+                          if unit.color == self.color and unit.symbol != self.symbol]
+
+        # check king first, highest likelihood of negating checkmate ability
+        friendly_units.insert(0, self)
+
+        # check if any available move leads to a state where king is no longer in check
+        for unit in friendly_units:
+            for step in unit.available_steps(board):
+                hypothetical_board = deepcopy(board)
+                hypothetical_board.step(self.get_step(step))
+                king = hypothetical_board.get_king(self.color)
+                if not king.is_in_check(hypothetical_board):
+                    return False
+
+        return True
 
     def filter(self, available_steps, board, dont_filter=False):
         """

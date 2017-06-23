@@ -68,6 +68,14 @@ class Game(object):
             rows_as_strings.append(string)
         return ''.join(rows_as_strings)
 
+    def king_is_in_check(self):
+        for color in Piece.COLORS:
+            king = self.board.get_king(color)
+            if king.is_in_check(self.board):
+                return (True, king)
+
+        return (False, None)
+
     def step(self, command, color):
         args = CommandParser.__call__(command)
         symbol, square, is_attack_move, special_file, special_rank = args
