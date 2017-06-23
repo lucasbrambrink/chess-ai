@@ -16,7 +16,7 @@ PLAYER_KEY = 'player_key'
 class GameCache(object):
 
     @staticmethod
-    def fetch(game_id):
+    def fetch(game_id, raise_error=True):
         game = cache.get(game_id)
         if game is None:
             try:
@@ -24,7 +24,8 @@ class GameCache(object):
                 game = Game.initialize_from_dict(game_instance.__dict__)
                 cache.set(game.id, game)
             except GameInstance.DoesNotExist:
-                raise ValueError('That game doesnt exist anywhere')
+                if raise_error:
+                    raise ValueError('That game doesnt exist anywhere')
 
         return game
 
@@ -64,7 +65,7 @@ class GameView(TemplateView):
 
     def dispatch(self, request, *args, **kwargs):
         game_id = kwargs.get('game_id')
-        game = cache.get(game_id)
+        game = GameCache.fetch(game_id, raise_error=False)
         if game is None:
             return redirect('new_game')
 

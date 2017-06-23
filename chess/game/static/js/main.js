@@ -68,7 +68,10 @@ $(document).ready(function() {
             var piece = activeSquare.data('piece');
             var position = activeSquare.data('position');
             var newPosition = $(this).data('position');
-            $('input[name=command]').val(piece + position + newPosition);
+            var potentialPiece = $(this).data('piece');
+            var isAttackMove = potentialPiece !== undefined && potentialPiece.length > 0;
+            var attackIndicator = isAttackMove ? 'x' : '';
+            $('input[name=command]').val(piece + position + attackIndicator + newPosition);
             $('form.move').submit();
         }
 
