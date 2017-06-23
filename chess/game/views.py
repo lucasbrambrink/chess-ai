@@ -13,6 +13,22 @@ log = logging.getLogger(__name__)
 PLAYER_KEY = 'player_key'
 
 
+class GameCache(object):
+
+    @staticmethod
+    def fetch(game_id):
+        game = cache.get(game_id)
+        if game is None:
+            try:
+                game_instance = GameInstance.objects.get(game_id=game_id)
+                game = Game.initialize_from_dict(game_instance.__dict__)
+                cache.set(game.id, game)
+            except GameInstance.DoesNotExist:
+                raise ValueError('That game doesnt exist anywhere')
+
+        return game
+
+
 class NewGameRedirect(RedirectView):
     permanent = False
 
@@ -37,13 +53,7 @@ class InitGameView(TemplateView):
             raise ValueError()
 
         color = form.data.get('color')
-        game = cache.get(game_id)
-        if game is None:
-            try:
-                game_instance = GameInstance.objects.get(game_id=game_id)
-                game = Game.initialize_from_dict(game_instance.__dict__)
-            except GameInstance.DoesNotExist:
-                raise ValueError()
+        game = GameCache.fetch(game_id)
 
         request.session[PLAYER_KEY] = game.player_keys[color]
         return HttpResponseRedirect(reverse('live', args=(game_id, color)))
@@ -63,13 +73,7 @@ class GameView(TemplateView):
     def get_context_data(self, **kwargs):
         game_id = kwargs.get('game_id')
         color = kwargs.get('color')
-        game = cache.get(game_id)
-        if game is None:
-            try:
-                game_instance = GameInstance.objects.get(game_id=game_id)
-                game = Game.initialize_from_dict(game_instance.__dict__)
-            except GameInstance.DoesNotExist:
-                raise ValueError('That game doesnt exist anywhere')
+        game = GameCache.fetch(game_id)
 
         game.save()
         context = super(GameView, self).get_context_data(**kwargs)
@@ -97,17 +101,17 @@ class SubmitMoveView(View):
             raise ValueError('The game is not in cache!')
 
         redirect_response = redirect(reverse('live', args=(game.id, color)))
-        if game.last_color_played == color:
-            log.info('It is not your turn!')
-            return redirect_response
+        # if game.last_color_played == color:
+        #     log.info('It is not your turn!')
+        #     return redirect_response
 
         form = CommandForm(request.POST)
         if form.is_valid():
             try:
-                player_key = request.session[PLAYER_KEY]
-                if player_key != game.player_keys[color]:
-                    log.error('Wrong player key... %s vs %s' % (player_key, game.player_keys[color]))
-                    return HttpResponseNotAllowed('You should not do that.')
+                # player_key = request.session[PLAYER_KEY]
+                # if player_key != game.player_keys[color]:
+                #     log.error('Wrong player key... %s vs %s' % (player_key, game.player_keys[color]))
+                #     return HttpResponseNotAllowed('You should not do that.')
                 game.board.step(form.cleaned_data['command'], game.next_color)
             except KeyError:
                 log.error('Unassigned player key!')
@@ -126,7 +130,7 @@ class SubmitMoveView(View):
 class DiffView(View):
 
     def get(self, request, game_id, color, last_color):
-        game = cache.get(game_id)
+        game = GameCache.fetch(game_id)
         if game is None:
             raise ValueError('The game is not in cache!')
 

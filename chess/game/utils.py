@@ -112,6 +112,7 @@ class Board(object):
     def step(self, command, color):
         args = CommandParser.__call__(command)
         symbol, square, is_attack_move, special_file, special_rank = args
+        # import ipdb; ipdb.set_trace()
         all_pieces = self.pieces
         if special_file is not None:
             all_pieces = filter(lambda p: p.position.file == special_file,
@@ -135,6 +136,7 @@ class Board(object):
         self[piece.position].piece = None
         piece.position = square
         self[piece.position] = piece
+        piece.has_moved = True
 
 
 class Piece(object):
@@ -146,15 +148,17 @@ class Piece(object):
     BLACK = 'b'
     COLORS = (WHITE, BLACK)
 
-    def __init__(self, position, color):
+    def __init__(self, position, color, has_moved=False):
         assert isinstance(position, Square)
         self.position = position
         self.color = color
+        self.has_moved = has_moved
 
     def __iter__(self):
         yield ('symbol', self.symbol)
         yield ('position', str(self.position))
         yield ('color', self.color)
+        yield ('has_moved', self.has_moved)
 
     @property
     def steps(self):
@@ -223,13 +227,13 @@ class Pawn(Piece):
 
     @property
     def _steps(self):
-        return [(0, 1 * self.direction)] if not self.has_moved \
+        return [(0, 1 * self.direction)] if self.has_moved \
             else [(0, 1 * self.direction), (0, 2 * self.direction)]
 
-    @property
-    def has_moved(self):
-        initial_rank = 2 if self.color == Piece.WHITE else 7
-        return self.position.rank == initial_rank
+    # @property
+    # def has_moved(self):
+    #     initial_rank = 2 if self.color == Piece.WHITE else 7
+    #     return self.position.rank == initial_rank
 
     def special_steps(self, board=None, require_enemy_presence=True):
         steps = []
@@ -358,11 +362,11 @@ class PieceFactory(object):
     )
 
     @classmethod
-    def create(cls, symbol, position, color):
+    def create(cls, symbol, position, color, has_moved):
         piece_class = next((kls for kls in cls.PIECES
                             if kls.symbol == symbol))
         file_, rank = position
-        piece = piece_class(Square(file_, rank), color=color)
+        piece = piece_class(Square(file_, rank), color=color, has_moved=has_moved)
         return piece
 
 
@@ -391,14 +395,14 @@ class CommandParser(object):
             symbol = command[0]
             if not is_attack_move:
                 special_file = command[1]
-                special_rank = command[2]
+                special_rank = int(command[2])
             else:
                 special_file = command[1]
             square = Square(command[3], int(command[4]))
         elif is_attack_move and len(command) == 6:
             symbol = command[0]
             special_file = command[1]
-            special_rank = command[2]
+            special_rank = int(command[2])
             square = Square(command[4], int(command[5]))
         else:
             raise ValueError('Wrong command')

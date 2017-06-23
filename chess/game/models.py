@@ -68,7 +68,8 @@ class Game(object):
             if piece is not None:
                 new_piece = PieceFactory.create(piece.get('symbol'),
                                                 position,
-                                                piece.get('color'))
+                                                piece.get('color'),
+                                                piece.get('has_moved'))
 
             existing_square = new_game.board[position]
             existing_square.piece = new_piece
@@ -104,6 +105,7 @@ class Game(object):
         return (False, None)
 
     def save(self):
+        GameInstance.objects.filter(game_id=self.id).delete()
         instance = GameInstance.load_from(self.serialized)
         instance.save()
 

@@ -59,14 +59,16 @@ $(document).ready(function() {
                     square = game_data.board.squares[i];
                     board_dict[square.position] = square;
                 }
-                console.log(board_dict);
+                // console.log(board_dict);
             });
 
     $('.square').click(function() {
         if ($(this).hasClass('available')) {
-            var piece = $('.active').data('piece');
+            var activeSquare = $('.active');
+            var piece = activeSquare.data('piece');
+            var position = activeSquare.data('position');
             var newPosition = $(this).data('position');
-            $('input[name=command]').val(piece + newPosition);
+            $('input[name=command]').val(piece + position + newPosition);
             $('form.move').submit();
         }
 
@@ -75,7 +77,7 @@ $(document).ready(function() {
 
         var square = board_dict[$(this).data('position')];
         set_available(square.piece);
-        console.log(square);
+        // console.log(square);
     });
 
 
