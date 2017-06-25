@@ -48,6 +48,24 @@
 
     </div>
 
+    <div class="chat">
+        <form class="chat-form" method="post" action="{{ chat_url }}">
+            {% csrf_token %}
+            {{ chat_form }}
+            <textarea name="chat" label="chat" placeholder="Chat">
+
+            </textarea>
+            <input type="hidden" name="color" value="{{ color }}">
+            <input type="submit">
+        </form>
+        <ul>
+            {% for chat in chats %}
+                <li>{{ chat }}</li>
+            {% endfor %}
+        </ul>
+
+    </div>
+
     <div class="alerts">
         {% if is_check_mate %}
             <h1>CHECKMATE! GAME OVER! </h1>

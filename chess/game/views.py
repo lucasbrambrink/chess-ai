@@ -5,7 +5,7 @@ from django.shortcuts import render, reverse, redirect
 from django.views.generic import TemplateView, RedirectView, View
 from django.http.response import HttpResponseRedirect, HttpResponseNotAllowed
 from .models import Game, GameInstance
-from .forms import CommandForm, InitGameForm
+from .forms import CommandForm, InitGameForm, ChatForm
 from django.core.cache import cache
 from django.http import JsonResponse
 
@@ -89,6 +89,9 @@ class GameView(TemplateView):
         form = CommandForm()
         form.set_label(game.last_color_played)
         context['command_form'] = form
+        context['chat_form'] = ChatForm()
+        context['chat_url'] = '/game/live/{}/{}/chat'.format(game_id, color)
+        context['chats'] = game.chat[::-1]
         context['color'] = game.last_color_played
         context['game_id'] = game.id
         is_in_check, piece = game.board.king_is_in_check()
@@ -136,6 +139,30 @@ class SubmitMoveView(View):
 
         return redirect_response
 
+
+class SubmitChatView(View):
+
+
+    def post(self, request, game_id, color, **kwargs):
+        game = GameCache.fetch(game_id)
+        if game is None:
+            raise ValueError('The game is not in cache!')
+
+        redirect_response = redirect(reverse('live', args=(game.id, color)))
+        # if game.last_color_played == color:
+        #     log.info('It is not your turn!')
+        #     return redirect_response
+
+        form = ChatForm(request.POST)
+        if form.is_valid():
+            print(form.__dict__)
+            print(request.POST)
+            game.add_chat(request.POST.get('chat'), color)
+            cache.set(game.id, game)
+        else:
+            log.warning('Form is not valid!')
+
+        return redirect_response
 
 class DiffView(View):
 

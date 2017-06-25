@@ -93,7 +93,8 @@ form.move label {
   left: 2px;
 }
 .moves,
-.alerts {
+.alerts,
+.chat {
   width: 34%;
   position: absolute;
   right: 0;
@@ -102,18 +103,32 @@ form.move label {
   overflow: scroll;
 }
 .moves table,
-.alerts table {
+.alerts table,
+.chat table {
   width: 100%;
 }
 .moves table td,
-.alerts table td {
+.alerts table td,
+.chat table td {
   width: 30%;
 }
 .moves table td:first-child,
-.alerts table td:first-child {
+.alerts table td:first-child,
+.chat table td:first-child {
   width: 20%;
 }
 .alerts {
   top: 400px;
   height: 100px;
+}
+.chat {
+  top: 220px;
+  height: 150px;
+  font-size: 14px;
+}
+ul {
+  padding: 0;
+}
+ul li {
+  list-style: none;
 }

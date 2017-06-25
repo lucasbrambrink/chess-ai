@@ -37,6 +37,7 @@ class Game(object):
         self.last_color_played = Piece.BLACK
         # initialize player keys
         self.player_keys = self.generate_player_keys()
+        self.chat = []
 
         for color in Piece.COLORS:
             for i, set_of_pieces in enumerate((self.FIRST_RANK,
@@ -48,9 +49,14 @@ class Game(object):
         yield ('game_id', self.id)
         yield ('last_color_played', self.last_color_played)
         yield ('moves', self.board.moves)
+        # yield ('chat', self.chat)
 
     def move(self, command, color):
         self.board.step(command, color)
+
+    def add_chat(self, chat_line, color):
+        color = 'White' if color == Piece.WHITE else 'Black'
+        self.chat.append('%s: %s' % (color, chat_line))
 
     def print_moves(self):
         moves = (m for m in self.board.moves)
@@ -88,7 +94,7 @@ class Game(object):
             existing_square = new_game.board[position]
             existing_square.piece = new_piece
 
-        new_game.board.moves = game.get('moves')
+        new_game.board.moves = game.get('moves', [])
         return new_game
 
     @property

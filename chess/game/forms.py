@@ -19,3 +19,11 @@ class CommandForm(forms.Form):
         """choose opposite as last color"""
         label = '%s to move ' % ('White' if color == Piece.BLACK else 'Black')
         self.fields['command'].label = label
+
+
+class ChatForm(forms.Form):
+    chat_line = forms.Textarea()
+    player_key = forms.HiddenInput()
+
+    class Meta:
+        fields = ('chat_line', 'player_key')

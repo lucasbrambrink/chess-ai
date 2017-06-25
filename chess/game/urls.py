@@ -7,5 +7,6 @@ urlpatterns = [
     url(r'^live/(?P<game_id>[\w]+)/$', views.InitGameView.as_view(), name='pick_color'),
     url(r'^live/(?P<game_id>[\w]+)/(?P<color>[b|w])$', views.GameView.as_view(), name='live'),
     url(r'^live/(?P<game_id>[\w]+)/(?P<color>[b|w])/submit_move$', views.SubmitMoveView.as_view(), name='live_post'),
+    url(r'^live/(?P<game_id>[\w]+)/(?P<color>[b|w])/chat$', views.SubmitChatView.as_view(), name='chat'),
     url(r'^live/(?P<game_id>[\w]+)/(?P<color>[b|w])/(?P<last_color>[b|w])', views.DiffView.as_view(), name='diff'),
 ]

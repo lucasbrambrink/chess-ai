@@ -163,6 +163,7 @@ class Board(object):
 
         # test if move evades check
         hypothetical_board = deepcopy(self)
+        hypothetical_board.moves = []
         hypothetical_board.execute_move(deepcopy(piece), color, deepcopy(square), is_attack_move)
         king = hypothetical_board.get_king(color)
         if king.is_in_check(hypothetical_board):
