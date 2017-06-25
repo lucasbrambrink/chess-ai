@@ -416,7 +416,10 @@ class King(Piece):
         for unit in friendly_units:
             for available_step in unit.available_steps(board):
                 hypothetical_board = deepcopy(board)
-                hypothetical_board.step(unit.get_step(available_step), self.color)
+                try:
+                    hypothetical_board.step(unit.get_step(available_step), self.color)
+                except ValueError:
+                    continue
                 king = hypothetical_board.get_king(self.color)
                 if not king.is_in_check(hypothetical_board):
                     return False

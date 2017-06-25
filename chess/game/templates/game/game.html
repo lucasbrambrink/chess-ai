@@ -49,19 +49,19 @@
     </div>
 
     <div class="alerts">
-        {% if is_in_check %}
-            <h3>{{ is_in_check }} is in check!</h3>
-        {% endif %}
         {% if is_check_mate %}
             <h1>CHECKMATE! GAME OVER! </h1>
+        {% elif is_in_check %}
+            <h3>{{ is_in_check }} is in check!</h3>
         {% endif %}
-        <form class="move" method="post" action="{{ submit_url }}">
-            {% csrf_token %}
-            {{ command_form }}
-            <input type="hidden" id="color" value="{{ color }}">
-            <input type="submit">
-        </form>
-
+        {% if not is_check_mate %}
+            <form class="move" method="post" action="{{ submit_url }}">
+                {% csrf_token %}
+                {{ command_form }}
+                <input type="hidden" id="color" value="{{ color }}">
+                <input type="submit">
+            </form>
+         {% endif %}
     </div>
 
 </div>
