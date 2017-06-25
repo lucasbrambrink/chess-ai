@@ -2,14 +2,22 @@ svg {
   width: 100%;
   height: 100%;
 }
+body {
+  font-family: 'Open Sans', Arial, sans-serif;
+}
+header {
+  padding: 1%;
+}
 .game-container {
-  width: 550px;
+  width: 750px;
   margin: auto;
+  position: relative;
 }
 .board {
-  width: 500px;
+  width: 65%;
   height: 500px;
   border: 1px solid black;
+  position: relative;
 }
 .board div {
   display: inline-block;
@@ -56,4 +64,56 @@ svg {
 }
 form.move input {
   display: none;
+}
+form.move label {
+  position: absolute;
+  bottom: 0;
+  left: 5px;
+}
+.rank,
+.file {
+  position: absolute;
+  font-size: 14px;
+}
+.board .rank {
+  width: 3%;
+  display: inline-block;
+  left: 1px;
+}
+.board .file {
+  float: left;
+  position: relative;
+  width: 12.5%;
+  display: inline-block;
+}
+.board .file-row {
+  height: 5px;
+  position: absolute;
+  bottom: -47px;
+  left: 2px;
+}
+.moves,
+.alerts {
+  width: 34%;
+  position: absolute;
+  right: 0;
+  top: 0;
+  height: 300px;
+  overflow: scroll;
+}
+.moves table,
+.alerts table {
+  width: 100%;
+}
+.moves table td,
+.alerts table td {
+  width: 30%;
+}
+.moves table td:first-child,
+.alerts table td:first-child {
+  width: 20%;
+}
+.alerts {
+  top: 400px;
+  height: 100px;
 }

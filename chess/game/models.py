@@ -45,8 +45,22 @@ class Game(object):
                 self.initialize_rank(set_of_pieces, color, rank)
 
     def __iter__(self):
-        yield ('id', self.id)
+        yield ('game_id', self.id)
         yield ('last_color_played', self.last_color_played)
+        yield ('moves', self.board.moves)
+
+    def move(self, command, color):
+        self.board.step(command, color)
+
+    def print_moves(self):
+        moves = (m for m in self.board.moves)
+        for i, move in enumerate(moves):
+            try:
+                next_move = next(moves)[1]
+            except StopIteration:
+                next_move = None
+
+            yield ('{}.'.format(i + 1), move[1], next_move or '')
 
     @property
     def serialized(self):
@@ -57,7 +71,7 @@ class Game(object):
     @classmethod
     def initialize_from_dict(cls, game):
         new_game = cls()
-        new_game.id = game.get('id')
+        new_game.id = game.get('game_id')
         new_game.last_color_played = game.get('last_color_played')
         new_game.player_keys = game.get('player_keys')
         previous_board = game.get('board')
@@ -74,6 +88,7 @@ class Game(object):
             existing_square = new_game.board[position]
             existing_square.piece = new_piece
 
+        new_game.board.moves = game.get('moves')
         return new_game
 
     @property
@@ -96,17 +111,12 @@ class Game(object):
             rows_as_strings.append(string)
         return ''.join(rows_as_strings)
 
-    def king_is_in_check(self):
-        for color in Piece.COLORS:
-            king = self.board.get_king(color)
-            if king.is_in_check(self.board):
-                return (True, king)
-
-        return (False, None)
-
     def save(self):
-        GameInstance.objects.filter(game_id=self.id).delete()
-        instance = GameInstance.load_from(self.serialized)
+        try:
+            instance = GameInstance.objects.get(game_id=self.id)
+        except GameInstance.DoesNotExist:
+            instance = GameInstance.load_from(self.serialized)
+        instance.board = self.serialized['board']
         instance.save()
 
 
@@ -122,7 +132,7 @@ class GameInstance(models.Model):
             game = game.serialized
         else:
             assert type(game) is dict
-        instance = cls(game_id=game['id'],
+        instance = cls(game_id=game['game_id'],
                        last_color_played=game['last_color_played'],
                        player_keys=game['player_keys'],
                        board=game['board'])

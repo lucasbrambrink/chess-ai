@@ -3,7 +3,9 @@
 {% block container %}
 <div class="container">
     <div class="game-container">
-        <h1>Chess</h1>
+        <h1>New Game</h1>
+        <h3>Select player</h3>
+
         <form method="post">
             {% csrf_token %}
             {{ init_form }}

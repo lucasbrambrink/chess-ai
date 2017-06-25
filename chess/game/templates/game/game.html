@@ -2,24 +2,13 @@
 
 {% block container %}
 <div class="game-container">
-    <h1>Chess</h1>
-        {% if is_in_check %}
-            <h3>{{ is_in_check }} is in check!</h3>
-        {% endif %}
-        {% if is_check_mate %}
-            <h1>CHECKMATE! GAME OVER! </h1>
-        {% endif %}
-    <form class="move" method="post" action="{{ submit_url }}">
-        {% csrf_token %}
-        {{ command_form }}
-        <input type="hidden" id="color" value="{{ color }}">
-        <input type="submit">
-    </form>
-
     <div id="board" class="board" data-id="{{ game_id }}">
         {% for row in rows %}
             <div class="row">
                 {% for column in row %}
+                    {% if forloop.first %}
+                        <span class="rank">{{ column.rank }}</span>
+                    {% endif %}
                     {% if column.piece %}
                         <div class="square"
                              data-position="{{column}}"
@@ -37,6 +26,43 @@
                 {% endfor %}
             </div>
         {% endfor %}
+            <div class="row file-row">
+                {% for file in files %}
+                    <span class="file">{{ file }}</span>
+                {% endfor %}
+            </div>
     </div>
+
+    <div class="moves">
+        <table>
+            <tbody>
+                {% for move in moves %}
+                <tr>
+                    {% for comp in move %}
+                        <td>{{ comp }}</td>
+                    {% endfor %}
+                </tr>
+                {%  endfor %}
+            </tbody>
+        </table>
+
+    </div>
+
+    <div class="alerts">
+        {% if is_in_check %}
+            <h3>{{ is_in_check }} is in check!</h3>
+        {% endif %}
+        {% if is_check_mate %}
+            <h1>CHECKMATE! GAME OVER! </h1>
+        {% endif %}
+        <form class="move" method="post" action="{{ submit_url }}">
+            {% csrf_token %}
+            {{ command_form }}
+            <input type="hidden" id="color" value="{{ color }}">
+            <input type="submit">
+        </form>
+
+    </div>
+
 </div>
 {% endblock %}}

@@ -42,7 +42,12 @@ $(document).ready(function() {
         $.ajax(url)
             .done(function(data) {
                 if(data.changed) {
-                    window.location.reload();
+                    var audio = new Audio('/static/game/audio/filling-your-inbox.mp3');
+                    audio.volume = 0.4;
+                    audio.play();
+                    setTimeout(function() {
+                        window.location.reload();
+                    }, 1000);
                 }
             });
     }, 3000);
@@ -59,7 +64,6 @@ $(document).ready(function() {
                     square = game_data.board.squares[i];
                     board_dict[square.position] = square;
                 }
-                // console.log(board_dict);
             });
 
     $('.square').click(function() {
@@ -71,6 +75,7 @@ $(document).ready(function() {
             var potentialPiece = $(this).data('piece');
             var isAttackMove = potentialPiece !== undefined && potentialPiece.length > 0;
             var attackIndicator = isAttackMove ? 'x' : '';
+
             $('input[name=command]').val(piece + position + attackIndicator + newPosition);
             $('form.move').submit();
         }

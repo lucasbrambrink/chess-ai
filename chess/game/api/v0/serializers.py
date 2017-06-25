@@ -30,6 +30,7 @@ class BoardSerializer(serializers.Serializer):
 #     board = BoardSerializer(read_only=True)
 
 
+
 class GameSerializer(object):
 
     def __init__(self, game):
@@ -44,8 +45,10 @@ class GameSerializer(object):
 
                 if square.piece is not None:
                     piece = dict(square.piece)
-                    piece['available_moves'] = list(str(move) for move in
-                                                    square.piece.available_steps(game.board))
+
+                    piece['available_moves'] = list(square.as_consumable_move(move, square.piece) for move in
+                                                    square.piece.available_steps(game.board,
+                                                                                 translate=True))
                     square_dict['piece'] = piece
 
                 squares.append(square_dict)

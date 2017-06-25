@@ -131,6 +131,7 @@ STATICFILES_DIRS = (
 
 SHELL_PLUS_PRE_IMPORTS = (
     ('game.utils', ('*')),
+    ('game.models', ('Game'))
 )
 
 LOGGING = {

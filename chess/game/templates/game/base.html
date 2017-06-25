@@ -5,13 +5,20 @@
 <head>
     <meta charset="UTF-8">
     <title>Chess</title>
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet">
 
     <link rel="stylesheet" type="text/css" href="{% static 'game/css/board.css' %}" />
 
 </head>
 <body>
 
+
+
 <div class="container">
+    <header>
+        <h1>Chess with Lucas</h1>
+        <h3>Simple P2P and AI chess playing.</h3>
+    </header>
     {% block container %}
 
     {% endblock %}
