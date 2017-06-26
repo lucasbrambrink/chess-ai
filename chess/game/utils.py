@@ -30,6 +30,11 @@ class Square(object):
         return self.rank not in self.RANK or self.file == self.NULL_FILE
 
     @property
+    def signature(self):
+        piece = '' if self.piece is None else '%s%s' % (self.piece.symbol, self.piece.color)
+        return '%s%s' % (str(self), piece)
+
+    @property
     def is_empty(self):
         return self.piece is None
 
@@ -69,6 +74,15 @@ class Board(object):
         self.position = {f: [Square(f, r) for r in Square.RANK]
                          for f in Square.FILES}
         self.moves = []
+
+    def __hash__(self):
+        rows = []
+        for row in self.as_descending_rows:
+            rows.append(
+                ''.join(s.signature for s in row)
+            )
+        hash_string = ''.join(rows)
+        return sha256(hash_string.encode()).hexdigest()
 
     @property
     def as_descending_rows(self):
@@ -141,9 +155,9 @@ class Board(object):
         if special_file is not None:
             all_pieces = filter(lambda p: p.position.file == special_file,
                                 all_pieces)
-            if special_rank is not None:
-                all_pieces = filter(lambda p: p.position.rank == special_rank,
-                                    all_pieces)
+        if special_rank is not None:
+            all_pieces = filter(lambda p: p.position.rank == special_rank,
+                                all_pieces)
 
         allow_special_steps = is_attack_move or symbol == King.symbol
         possible_pieces = [piece for piece in all_pieces
@@ -155,9 +169,20 @@ class Board(object):
                                )
                            ]
         if len(possible_pieces) != 1:
-            print(possible_pieces)
+            raise_error = True
+            print(command, possible_pieces)
+            if len(possible_pieces) == 2:
+                possible_pieces = [p for p in possible_pieces
+                                   if not p.has_moved]
+                raise_error = len(possible_pieces) != 1
+
+            for piece in possible_pieces:
+                print(piece.available_steps(self,
+                                            allow_special_steps=allow_special_steps,
+                                            translate=True))
             # import ipdb; ipdb.set_trace()
-            raise ValueError('That command is ambiguous')
+            if raise_error:
+                raise ValueError('That command is ambiguous')
 
         piece = possible_pieces[0]
 
@@ -328,10 +353,23 @@ class Pawn(Piece):
         return step in map(self.position.step, self._steps)
 
     def filter(self, available_steps, board, dont_filter=False):
-        for step in self.steps:
+        step_gen = (s for s in self.steps)
+        for step in step_gen:
             front_position = board[self.position.step(step)]
-            if Square.is_hosting_enemy(front_position, self.color):
-                available_steps.remove(front_position)
+            if not front_position.is_empty:
+                try:
+                    available_steps.remove(front_position)
+                except KeyError:
+                    pass
+                try:
+                    next_step = next(step_gen)
+                    more_front = board[self.position.step(next_step)]
+                    try:
+                        available_steps.remove(more_front)
+                    except KeyError:
+                        pass
+                except StopIteration:
+                    pass
 
         return available_steps
 
@@ -511,6 +549,7 @@ class CommandParser(object):
     @classmethod
     def __call__(self, command):
         is_attack_move = 'x' in command
+        command = command.replace('+', '')
         special_file = None
         special_rank = None
         castle = None
@@ -527,9 +566,17 @@ class CommandParser(object):
             square = Square(command[1], int(command[2]))
 
         elif len(command) == 4:
-            symbol = command[0]
-            if not is_attack_move:
-                special_file = command[1]
+            if command[0] in Square.FILES:
+                symbol = Pawn.symbol
+                special_file = command[0]
+            else:
+                symbol = command[0]
+                if not is_attack_move:
+                    if command[1] in Square.FILES:
+                        special_file = command[1]
+                    elif command[1] in map(str, Square.RANK):
+                        special_rank = int(command[1])
+
             square = Square(command[2], int(command[3]))
         elif len(command) == 5:
             symbol = command[0]

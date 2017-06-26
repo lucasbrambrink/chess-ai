@@ -1,6 +1,18 @@
 import os
 from hashlib import sha256
 from django.db import models
+from django.contrib.postgres.fields import JSONField
+
+
+class BoardState(models.Model):
+    serialized_state = JSONField()
+    hash = models.CharField(max_length=255)
+    historical_games = models.ManyToManyField(to='HistoricalGame')
+
+    @property
+    def as_game(self):
+        from game.models import Game
+        return Game.initialize_from_dict(self.serialized_state)
 
 
 class HistoricalGame(models.Model):
@@ -126,6 +138,8 @@ class HistoricalGame(models.Model):
                 slice = moves_string[index:next_index]
 
             # 'e1 e4 ' => ['e1', 'e4', '']
+            if not len(slice):
+                break
             white_move = slice.split()[0].replace(move_index, '')
             black_move = slice.split()[1]  # can be ''
 
@@ -142,3 +156,16 @@ class HistoricalGame(models.Model):
                 move_num += 1
 
         return all_moves
+
+    def create_board_states(self):
+        clean_moves = self.parse_moves_into_board(self.moves)
+        from game.models import Game
+        game = Game()
+        for step in clean_moves:
+            game.board.step(*step)
+            obj, _ = BoardState.objects.get_or_create(
+                serialized_state=game.serialized,
+                hash=game.board.__hash__()
+            )
+            obj.historical_games.add(self)
+            obj.save()
