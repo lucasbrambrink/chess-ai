@@ -4,7 +4,7 @@ import logging
 from django.shortcuts import render, reverse, redirect
 from django.views.generic import TemplateView, RedirectView, View
 from django.http.response import HttpResponseRedirect, HttpResponseNotAllowed
-from .models import Game, GameInstance
+from .models import Game, GameInstance, Chat
 from .forms import CommandForm, InitGameForm, ChatForm
 from django.core.cache import cache
 from django.http import JsonResponse
@@ -91,7 +91,7 @@ class GameView(TemplateView):
         context['command_form'] = form
         context['chat_form'] = ChatForm()
         context['chat_url'] = '/game/live/{}/{}/chat'.format(game_id, color)
-        context['chats'] = game.chat[::-1]
+        context['chats'] = Chat.objects.filter(game_instance__game_id=game_id).values_list('line', flat=True)
         context['color'] = game.last_color_played
         context['game_id'] = game.id
         is_in_check, piece = game.board.king_is_in_check()
@@ -114,17 +114,17 @@ class SubmitMoveView(View):
             raise ValueError('The game is not in cache!')
 
         redirect_response = redirect(reverse('live', args=(game.id, color)))
-        # if game.last_color_played == color:
-        #     log.info('It is not your turn!')
-        #     return redirect_response
+        if game.last_color_played == color:
+            log.info('It is not your turn!')
+            return redirect_response
 
         form = CommandForm(request.POST)
         if form.is_valid():
             try:
-                # player_key = request.session[PLAYER_KEY]
-                # if player_key != game.player_keys[color]:
-                #     log.error('Wrong player key... %s vs %s' % (player_key, game.player_keys[color]))
-                #     return HttpResponseNotAllowed('You should not do that.')
+                player_key = request.session[PLAYER_KEY]
+                if player_key != game.player_keys[color]:
+                    log.error('Wrong player key... %s vs %s' % (player_key, game.player_keys[color]))
+                    return HttpResponseNotAllowed('You should not do that.')
                 game.move(form.cleaned_data['command'], game.next_color)
             except KeyError:
                 log.error('Unassigned player key!')
@@ -149,9 +149,9 @@ class SubmitChatView(View):
             raise ValueError('The game is not in cache!')
 
         redirect_response = redirect(reverse('live', args=(game.id, color)))
-        # if game.last_color_played == color:
-        #     log.info('It is not your turn!')
-        #     return redirect_response
+        if game.last_color_played == color:
+            log.info('It is not your turn!')
+            return redirect_response
 
         form = ChatForm(request.POST)
         if form.is_valid():
@@ -162,7 +162,7 @@ class SubmitChatView(View):
         else:
             log.warning('Form is not valid!')
 
-        return redirect_response
+        return JsonResponse({})
 
 class DiffView(View):
 

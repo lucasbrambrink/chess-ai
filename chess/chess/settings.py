@@ -39,7 +39,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django_extensions',
     'rest_framework',
-    'game'
+    'game',
+    'computer'
 ]
 
 MIDDLEWARE = [
@@ -131,7 +132,8 @@ STATICFILES_DIRS = (
 
 SHELL_PLUS_PRE_IMPORTS = (
     ('game.utils', ('*')),
-    ('game.models', ('Game'))
+    ('game.models', ('Game')),
+    ('computer.data_source', 'ScrapePGN'),
 )
 
 LOGGING = {
@@ -144,7 +146,7 @@ LOGGING = {
         },
     },
     'loggers': {
-        'django': {
+        'game': {
             'handlers': ['console'],
             'level': 'DEBUG',
             'propagate': True,

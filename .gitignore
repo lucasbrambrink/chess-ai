@@ -4,4 +4,4 @@ venv/
 .DS_Store
 *.pyc
 *.sqlite*
-
+pgn_data/

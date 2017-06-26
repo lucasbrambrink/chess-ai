@@ -52,6 +52,35 @@ $(document).ready(function() {
             });
     }, 3000);
 
+    $('form.chat-form').on('submit', function(e) {
+        e.preventDefault();
+        var value = $('textarea[name="chat"]').val();
+        var color = $('#color').val() === 'w' ? 'White' : 'Black';
+        $('.chat-list').prepend(
+            '<li>' + color + ':' + value + '</li>'
+        );
+        var provisionToken = function (csrf_token) {
+            $.ajaxPrefilter(function (options, originalOptions, jqXHR) {
+                jqXHR.setRequestHeader('X-CSRFToken', csrf_token);
+            });
+        };
+        var url = '/game/live/' + $('#board').data('id') + '/' + $('#color').val() + '/chat';
+        var csrf = $('input[name=csrfmiddlewaretoken]').val();
+        provisionToken(csrf);
+        console.log(value, csrf);
+        $.ajax({
+            url: url,
+            data: JSON.stringify({
+                csrftoken: csrf,
+                chat: value
+            }),
+            contentType: 'application/json',
+            type: 'POST',
+        }).done(function(e) {
+            console.log(e);
+        });
+    });
+
     var game_data = null;
     var board_dict = null;
     $.ajax('/game/api/v0/live/' + $('#board').data('id'))

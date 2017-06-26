@@ -2,7 +2,7 @@ from django.db import models
 from hashlib import sha256
 from datetime import datetime
 from os import urandom
-from django.contrib.postgres.fields import JSONField
+from django.contrib.postgres.fields import JSONField, ArrayField
 import json
 from .utils import *
 from .api.v0.serializers import GameSerializer
@@ -49,14 +49,17 @@ class Game(object):
         yield ('game_id', self.id)
         yield ('last_color_played', self.last_color_played)
         yield ('moves', self.board.moves)
-        # yield ('chat', self.chat)
+        yield ('chat', self.chat)
 
     def move(self, command, color):
         self.board.step(command, color)
 
     def add_chat(self, chat_line, color):
         color = 'White' if color == Piece.WHITE else 'Black'
-        self.chat.append('%s: %s' % (color, chat_line))
+        chat = '%s: %s' % (color, chat_line)
+        Chat.objects.create(line=chat,
+                            game_instance=GameInstance.objects.get(game_id=self.id))
+        self.chat.append(chat)
 
     def print_moves(self):
         moves = (m for m in self.board.moves)
@@ -95,6 +98,7 @@ class Game(object):
             existing_square.piece = new_piece
 
         new_game.board.moves = game.get('moves', [])
+        new_game.chat = Chat.objects.filter(game_instance__game_id=new_game.id).values_list('line', flat=True)
         return new_game
 
     @property
@@ -126,9 +130,16 @@ class Game(object):
         instance.save()
 
 
+class Chat(models.Model):
+    line = models.TextField()
+    created = models.DateTimeField(auto_now_add=True)
+    game_instance = models.ForeignKey(to='GameInstance')
+
+
 class GameInstance(models.Model):
     game_id = models.CharField(max_length=255)
     last_color_played = models.CharField(max_length=2)
+    moves = JSONField
     player_keys = JSONField()
     board = JSONField()
 
