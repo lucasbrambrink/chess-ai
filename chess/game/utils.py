@@ -144,9 +144,16 @@ class Board(object):
         self.move_piece(new_king_position, king)
         self.moves.append((color, command))
 
+    def pawn_conversion(self, square, color, conversion_symbol):
+        converted_piece = PieceFactory.create(conversion_symbol,
+                                              position=str(square),
+                                              color=color, has_moved=True)
+        board_square = self[square]
+        board_square.piece = converted_piece
+
     def step(self, command, color):
         args = CommandParser.__call__(command)
-        symbol, square, is_attack_move, special_file, special_rank, castle = args
+        symbol, square, is_attack_move, special_file, special_rank, castle, conversion_symbol = args
 
         if castle is not None:
             return self.castle(castle, color)
@@ -194,14 +201,16 @@ class Board(object):
         if king.is_in_check(hypothetical_board):
             raise ValueError('King is still in check after move')
 
-        self.execute_move(piece, color, square, is_attack_move)
+        self.execute_move(piece, color, square, is_attack_move, conversion_symbol)
 
-    def execute_move(self, piece, color, square, is_attack_move):
+    def execute_move(self, piece, color, square, is_attack_move, conversion_symbol=None):
         if isinstance(piece, King) and piece.translate_move(square) in King.CASTLING_MOVES:
             return self.castle(piece.translate_move(square), piece.color)
 
         self.move_piece(square, piece)
         self.moves.append((color, piece.get_canonical_step(self, square, is_attack_move)))
+        if isinstance(piece, Pawn) and conversion_symbol is not None:
+            self.pawn_conversion(square, color, conversion_symbol)
 
     def move_piece(self, square, piece):
         piece.previous_position = str(piece.position)
@@ -356,6 +365,8 @@ class Pawn(Piece):
         step_gen = (s for s in self.steps)
         for step in step_gen:
             front_position = board[self.position.step(step)]
+            if front_position is None:
+                continue
             if not front_position.is_empty:
                 try:
                     available_steps.remove(front_position)
@@ -553,7 +564,17 @@ class CommandParser(object):
         special_file = None
         special_rank = None
         castle = None
-        if command in King.CASTLING_MOVES:
+        conversion_symbol = None
+        is_conversion = '=' in command
+        if is_conversion:
+            symbol = Pawn.symbol
+            if is_attack_move:
+                squares = command.split('x')[1]
+                square = Square(squares[0], squares[1])
+            else:
+                square = Square(command[0], int(command[1]))
+            conversion_symbol = command.split('=')[1]
+        elif command in King.CASTLING_MOVES:
             symbol = King.symbol
             square = None
             castle = command
@@ -594,4 +615,4 @@ class CommandParser(object):
         else:
             raise ValueError('Wrong command')
 
-        return symbol, square, is_attack_move, special_file, special_rank, castle
+        return symbol, square, is_attack_move, special_file, special_rank, castle, conversion_symbol

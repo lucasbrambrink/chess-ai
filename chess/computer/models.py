@@ -53,6 +53,9 @@ class HistoricalGame(models.Model):
         self.hash = self.__hash__()
         self.save(update_fields=['hash'])
 
+    def __repr__(self):
+        return '{}: {} ({})'.format(self.event_name, self.round_in_series, self.date)
+
     def __hash__(self):
         hash_string = '{}{}{}{}'.format(
             self.event_name,
@@ -161,11 +164,18 @@ class HistoricalGame(models.Model):
         clean_moves = self.parse_moves_into_board(self.moves)
         from game.models import Game
         game = Game()
-        for step in clean_moves:
-            game.board.step(*step)
-            obj, _ = BoardState.objects.get_or_create(
-                serialized_state=game.serialized,
-                hash=game.board.__hash__()
-            )
-            obj.historical_games.add(self)
-            obj.save()
+        try:
+            for step in clean_moves:
+                game.board.step(*step)
+                obj, _ = BoardState.objects.get_or_create(
+                    serialized_state=game.serialized,
+                    hash=game.board.__hash__()
+                )
+                obj.historical_games.add(self)
+                obj.save()
+        except ValueError:
+            print('Problem with game %s' % str(self))
+        except TypeError as exc:
+            print('Problem with game %s' % str(self))
+            print(exc)
+
