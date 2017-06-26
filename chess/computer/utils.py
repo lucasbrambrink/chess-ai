@@ -8,7 +8,7 @@ class RuleSuite(object):
         self.heuristics = heuristics
 
 
-class DeepBlue(object):
+class AlphaBlue(object):
 
     def __init__(self, board, color):
         self.board = board
@@ -16,7 +16,7 @@ class DeepBlue(object):
         self.rule_suites = None
 
 
-class DeepBlueFactory(object):
+class AlphaBlueFactory(object):
 
     @classmethod
     def create(cls, rule_suites):
@@ -28,4 +28,4 @@ class DeepBlueFactory(object):
                 pass
             elif rule == Tactics.__class__.__name__:
                 pass
-        db = DeepBlue
+

@@ -2,6 +2,22 @@ from copy import deepcopy
 from .base import Heuristic
 
 
+class MinMaxInspection(Heuristic):
+    """
+    1 unit of inspection
+        for each move:
+            -> hypothetical_board
+            -> find MAX move for opponent
+
+
+        -> find MIN of (MAX moves)
+
+    - allow to apply recursively
+    """
+
+
+
+
 class Tactics(Heuristic):
     name = 'tactics'
 
