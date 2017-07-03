@@ -97,6 +97,13 @@ class Board(object):
         return [s.piece for s in flat_squares
                 if not s.is_empty]
 
+    def player_pieces(self, color):
+        return [p for p in self.pieces
+                if p.color == color]
+
+    def opponent_color(self, color):
+        return Piece.BLACK if color == Piece.WHITE else Piece.WHITE
+
     def __repr__(self):
         return str(self.position)
 
@@ -223,9 +230,20 @@ class Board(object):
         for color in Piece.COLORS:
             king = self.get_king(color)
             if king.is_in_check(self):
-                return (True, king)
+                return True, king
 
-        return (False, None)
+        return False, None
+
+    @property
+    def score(self):
+        """
+        :return: white vs black piece sum
+        """
+        return (
+            sum(p.relative_value for p in self.player_pieces(Piece.WHITE)),
+            sum(p.relative_value for p in self.player_pieces(Piece.BLACK)))
+
+
 
 
 class Piece(object):
@@ -435,8 +453,6 @@ class King(Piece):
                 return self.CASTLE_QUEEN_SIDE
         return move
 
-
-
     def is_in_check(self, board):
         enemy_units = filter(lambda p: p.color != self.color,
                              board.pieces)
@@ -555,7 +571,11 @@ class PieceFactory(object):
 
 
 class CommandParser(object):
-
+    """
+    granted, this is a bit of a mess at this time...
+    the idea is to parse any kind of move,
+    e4, Pe4, Pexd4, e8=Q, Be4+, etc.
+    """
 
     @classmethod
     def __call__(self, command):
