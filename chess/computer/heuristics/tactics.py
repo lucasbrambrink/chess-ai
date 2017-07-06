@@ -38,19 +38,14 @@ class MinMaxInspection(Heuristic):
         for piece in board.player_pieces(playing_as):
             # import ipdb; ipdb.set_trace()
             for move in piece.available_steps(board):
-                hypothetical_board = deepcopy(board)
-                hypothetical_piece = deepcopy(piece)
-                # import ipdb;
-                # ipdb.set_trace()
-                hypothetical_board.step(hypothetical_piece.get_unambiguous_step(hypothetical_board, move), playing_as)
+                board.step(piece.get_unambiguous_step(board, move), playing_as)
+
                 opponent_moves = []
                 # now inspect the available moves of the opponent
-                for opponent_piece in hypothetical_board.player_pieces(opponent_color):
-                    for opponent_move in opponent_piece.available_steps(hypothetical_board):
-                        inspection_board = deepcopy(hypothetical_board)
-                        inspection_piece = deepcopy(opponent_piece)
+                for opponent_piece in board.player_pieces(opponent_color):
+                    for opponent_move in opponent_piece.available_steps(board):
                         try:
-                            inspection_board.step(inspection_piece.get_unambiguous_step(inspection_board, opponent_move), opponent_color)
+                            board.step(opponent_piece.get_unambiguous_step(board, opponent_move), opponent_color)
                         except ValueError:
                             # might still be in check, invalid move, ignore
                             continue
@@ -58,13 +53,15 @@ class MinMaxInspection(Heuristic):
 
                         # quantify strength of move
                         opponent_moves.append(
-                            (inspection_board.score, opponent_move, opponent_piece)
+                            (board.score, opponent_move, opponent_piece)
                         )
+                        board.revert_last_move()
 
                 worst_score, best_opponent_move, opponent_piece = self.best_opponent_move(opponent_moves, initial_score, playing_as)
                 scored_moves.append(
                     (worst_score, move, best_opponent_move, opponent_piece)
                 )
+                board.revert_last_move()
 
         return max(scored_moves,
                    key=lambda x: x[0])

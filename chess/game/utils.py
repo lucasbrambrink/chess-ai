@@ -122,6 +122,15 @@ class Board(object):
     def __repr__(self):
         return str(self.position)
 
+    def __repr__(self):
+        rows_as_strings = []
+        for row in self.as_descending_rows:
+            string = ''.join(['[ ]' if square.is_empty else '[{}]'.format(square.piece.symbol)
+                     for square in row])
+            string += '\n'
+            rows_as_strings.append(string)
+        return ''.join(rows_as_strings)
+
     def __getitem__(self, item):
         """
         allow lookup via location string or Square instance
@@ -361,7 +370,7 @@ class Piece(object):
         return '%s%s' % (self.symbol, new_position)
 
     def get_unambiguous_step(self, board, new_position):
-        is_attack_move = 'x' if board[new_position].is_hosting_enemy else ''
+        is_attack_move = 'x' if Square.is_hosting_enemy(board[new_position], self.color) else ''
         return '{}{}{}{}'.format(self.symbol, str(self.position), is_attack_move, new_position)
 
     def get_canonical_step(self, board, new_position, is_attack_move):
