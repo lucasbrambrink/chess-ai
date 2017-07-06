@@ -217,15 +217,11 @@ class Board(object):
 
         piece = possible_pieces[0]
 
-        # test if move evades check
-        hypothetical_board = deepcopy(self)
-        hypothetical_board.moves = []
-        hypothetical_board.execute_move(deepcopy(piece), color, deepcopy(square), is_attack_move)
-        king = hypothetical_board.get_king(color)
-        if king.is_in_check(hypothetical_board):
-            raise ValueError('King is still in check after move')
-
         self.execute_move(piece, color, square, is_attack_move, conversion_symbol)
+        # test if move evades check
+        if self.get_king(color).is_in_check(self):
+            self.revert_last_move()
+            raise ValueError('King is still in check after move')
 
     def execute_move(self, piece, color, square, is_attack_move, conversion_symbol=None):
         if isinstance(piece, King) and piece.translate_move(square) in King.CASTLING_MOVES:
