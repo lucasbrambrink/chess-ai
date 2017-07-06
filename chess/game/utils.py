@@ -120,9 +120,6 @@ class Board(object):
         return BLACK if color == WHITE else WHITE
 
     def __repr__(self):
-        return str(self.position)
-
-    def __repr__(self):
         rows_as_strings = []
         for row in self.as_descending_rows:
             string = ''.join(['[ ]' if square.is_empty else '[{}]'.format(square.piece.symbol)

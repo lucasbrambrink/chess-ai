@@ -1,7 +1,11 @@
+import logging
 from copy import deepcopy
 from .base import Heuristic
 
 from game.conf import WHITE, BLACK
+
+
+log = logging.getLogger(__name__)
 
 
 class MinMaxInspection(Heuristic):
@@ -35,21 +39,34 @@ class MinMaxInspection(Heuristic):
         opponent_color = board.opponent_color(playing_as)
         initial_score = board.score
         scored_moves = []
-        for piece in board.player_pieces(playing_as):
+        piece_positions = set(p.position for p in board.player_pieces(playing_as))
+        for position in piece_positions:
+            piece = board[position].piece
             # import ipdb; ipdb.set_trace()
             for move in piece.available_steps(board):
-                board.step(piece.get_unambiguous_step(board, move), playing_as)
+                piece = board[position].piece
+                if move not in piece.available_steps(board):
+                    continue
+                try:
+                    board.step(piece.get_unambiguous_step(board, move), playing_as)
+                except ValueError:
+                    import ipdb; ipdb.set_trace()
 
                 opponent_moves = []
                 # now inspect the available moves of the opponent
-                for opponent_piece in board.player_pieces(opponent_color):
-                    for opponent_move in opponent_piece.available_steps(board):
+                opponent_piece_positions = set(p.position for p in board.player_pieces(opponent_color))
+                for position in opponent_piece_positions:
+                    opponent_piece = board[position].piece
+                    available_steps_for_opponent = opponent_piece.available_steps(board)
+                    for opponent_move in available_steps_for_opponent:
+                        opponent_piece = board[position].piece
+                        # import ipdb; ipdb.set_trace()
                         try:
                             board.step(opponent_piece.get_unambiguous_step(board, opponent_move), opponent_color)
                         except ValueError:
                             # might still be in check, invalid move, ignore
+                            log.info('{}: {}'.format(opponent_piece, opponent_move))
                             continue
-
 
                         # quantify strength of move
                         opponent_moves.append(

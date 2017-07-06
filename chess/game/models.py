@@ -119,13 +119,7 @@ class Game(object):
             self.board[p.position] = p
 
     def __repr__(self):
-        rows_as_strings = []
-        for row in self.board.as_descending_rows:
-            string = ''.join(['[ ]' if square.is_empty else '[{}]'.format(square.piece.symbol)
-                     for square in row])
-            string += '\n'
-            rows_as_strings.append(string)
-        return ''.join(rows_as_strings)
+        return self.board.__repr__()
 
     def save(self):
         try:
