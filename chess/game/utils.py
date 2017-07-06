@@ -168,10 +168,10 @@ class Board(object):
             Move(command, [rook, king])
         )
 
-    def pawn_conversion(self, square, color, conversion_symbol):
+    def pawn_conversion(self, square, color, conversion_symbol, pawn):
         converted_piece = PieceFactory.create(conversion_symbol,
-                                              position=str(square),
-                                              color=color, has_moved=True)
+                                              position=str(square), color=color,
+                                              previous_position=pawn.previous_position)
         board_square = self[square]
         board_square.piece = converted_piece
 
@@ -237,7 +237,7 @@ class Board(object):
                  [piece], slain_piece=slain_piece))
         # self.moves.append((color, piece.get_canonical_step(self, square, is_attack_move)))
         if isinstance(piece, Pawn) and conversion_symbol is not None:
-            self.pawn_conversion(square, color, conversion_symbol)
+            self.pawn_conversion(square, color, conversion_symbol, piece)
 
     def revert_last_move(self):
         last_move = self.moves.pop()
@@ -246,7 +246,7 @@ class Board(object):
                 symbol=serialized_piece['symbol'],
                 position=serialized_piece['previous_position'],
                 color=serialized_piece['color'],
-                has_moved=serialized_piece['has_moved'])
+                previous_position=serialized_piece['penultimate_position'])
             self[serialized_piece['position']].piece = None
             self[piece.position] = piece
 
@@ -256,11 +256,11 @@ class Board(object):
 
     def move_piece(self, square, piece):
         slain_piece = self[square].piece
+        piece.penultimate_position = str(piece.previous_position)
         piece.previous_position = str(piece.position)
         self[piece.position].piece = None
         piece.position = square
         self[piece.position] = piece
-        piece.has_moved = True
         return slain_piece
 
     def king_is_in_check(self):
@@ -292,19 +292,23 @@ class Piece(object):
     BLACK = BLACK
     COLORS = (WHITE, BLACK)
 
-    def __init__(self, position, color, has_moved=False, previous_position=None):
+    def __init__(self, position, color, previous_position=None, penultimate_position=None):
         assert isinstance(position, Square)
         self.position = position
         self.color = color
-        self.has_moved = has_moved
         self.previous_position = previous_position
+        self.penultimate_position = penultimate_position
 
     def __iter__(self):
         yield ('symbol', self.symbol)
         yield ('position', str(self.position))
         yield ('color', self.color)
-        yield ('has_moved', self.has_moved)
         yield ('previous_position', self.previous_position)
+        yield ('penultimate_position', self.penultimate_position)
+
+    @property
+    def has_moved(self):
+        return self.previous_position is not None
 
     @property
     def steps(self):
@@ -601,11 +605,13 @@ class PieceFactory(object):
     )
 
     @classmethod
-    def create(cls, symbol, position, color, has_moved):
+    def create(cls, symbol, position, color, previous_position, penultimate_position=None):
         piece_class = next((kls for kls in cls.PIECES
                             if kls.symbol == symbol))
         file_, rank = position
-        piece = piece_class(Square(file_, rank), color=color, has_moved=has_moved)
+        previous_position = None if previous_position == 'None' else previous_position
+        piece = piece_class(Square(file_, rank), color=color, previous_position=previous_position,
+                            penultimate_position=penultimate_position)
         return piece
 
 
