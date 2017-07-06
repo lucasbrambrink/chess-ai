@@ -134,6 +134,7 @@ SHELL_PLUS_PRE_IMPORTS = (
     ('game.utils', ('*')),
     ('game.models', ('Game')),
     ('computer.data_source', 'ScrapePGN'),
+    ('computer.heuristics.tactics', 'MinMaxInspection'),
 )
 
 LOGGING = {

@@ -1,6 +1,8 @@
 from copy import deepcopy
 from hashlib import sha256
 
+from .conf import WHITE, BLACK, COLORS
+
 
 class Square(object):
     FILES = 'abcdefgh'
@@ -67,6 +69,17 @@ class Square(object):
         return consumable_move
 
 
+class Move(object):
+
+    def __init__(self, canonical_move, pieces, slain_piece=None):
+        self.canonical_move = canonical_move
+        self.serialized_pieces = []
+        for piece in pieces:
+            self.serialized_pieces.append(dict(piece))
+
+        self.slain_piece = None if slain_piece is None else dict(slain_piece)
+
+
 class Board(object):
     """dict of files"""
 
@@ -74,6 +87,7 @@ class Board(object):
         self.position = {f: [Square(f, r) for r in Square.RANK]
                          for f in Square.FILES}
         self.moves = []
+        self.move_history = []
 
     def __hash__(self):
         rows = []
@@ -101,8 +115,9 @@ class Board(object):
         return [p for p in self.pieces
                 if p.color == color]
 
-    def opponent_color(self, color):
-        return Piece.BLACK if color == Piece.WHITE else Piece.WHITE
+    @staticmethod
+    def opponent_color(color):
+        return BLACK if color == WHITE else WHITE
 
     def __repr__(self):
         return str(self.position)
@@ -149,7 +164,9 @@ class Board(object):
         rook = self[rook_position].piece
         self.move_piece(new_rook_position, rook)
         self.move_piece(new_king_position, king)
-        self.moves.append((color, command))
+        self.moves.append(
+            Move(command, [rook, king])
+        )
 
     def pawn_conversion(self, square, color, conversion_symbol):
         converted_piece = PieceFactory.create(conversion_symbol,
@@ -194,7 +211,7 @@ class Board(object):
                 print(piece.available_steps(self,
                                             allow_special_steps=allow_special_steps,
                                             translate=True))
-            # import ipdb; ipdb.set_trace()
+            import ipdb; ipdb.set_trace()
             if raise_error:
                 raise ValueError('That command is ambiguous')
 
@@ -214,17 +231,37 @@ class Board(object):
         if isinstance(piece, King) and piece.translate_move(square) in King.CASTLING_MOVES:
             return self.castle(piece.translate_move(square), piece.color)
 
-        self.move_piece(square, piece)
-        self.moves.append((color, piece.get_canonical_step(self, square, is_attack_move)))
+        slain_piece = self.move_piece(square, piece)
+        self.moves.append(
+            Move(piece.get_canonical_step(self, square, is_attack_move),
+                 [piece], slain_piece=slain_piece))
+        # self.moves.append((color, piece.get_canonical_step(self, square, is_attack_move)))
         if isinstance(piece, Pawn) and conversion_symbol is not None:
             self.pawn_conversion(square, color, conversion_symbol)
 
+    def revert_last_move(self):
+        last_move = self.moves.pop()
+        for serialized_piece in last_move.serialized_pieces:
+            piece = PieceFactory.create(
+                symbol=serialized_piece['symbol'],
+                position=serialized_piece['previous_position'],
+                color=serialized_piece['color'],
+                has_moved=serialized_piece['has_moved'])
+            self[serialized_piece['position']].piece = None
+            self[piece.position] = piece
+
+        if last_move.slain_piece is not None:
+            piece = PieceFactory.create(**last_move.slain_piece)
+            self[piece.position] = piece
+
     def move_piece(self, square, piece):
+        slain_piece = self[square].piece
         piece.previous_position = str(piece.position)
         self[piece.position].piece = None
         piece.position = square
         self[piece.position] = piece
         piece.has_moved = True
+        return slain_piece
 
     def king_is_in_check(self):
         for color in Piece.COLORS:
@@ -251,8 +288,8 @@ class Piece(object):
     relative_value = 0
     can_travel = False
     symbol = ''
-    WHITE = 'w'
-    BLACK = 'b'
+    WHITE = WHITE
+    BLACK = BLACK
     COLORS = (WHITE, BLACK)
 
     def __init__(self, position, color, has_moved=False, previous_position=None):
@@ -323,6 +360,10 @@ class Piece(object):
     def get_step(self, new_position):
         return '%s%s' % (self.symbol, new_position)
 
+    def get_unambiguous_step(self, board, new_position):
+        is_attack_move = 'x' if board[new_position].is_hosting_enemy else ''
+        return '{}{}{}{}'.format(self.symbol, str(self.position), is_attack_move, new_position)
+
     def get_canonical_step(self, board, new_position, is_attack_move):
         symbol = self.symbol
         if isinstance(self, Pawn):
@@ -331,8 +372,6 @@ class Piece(object):
         is_in_check, _ = board.king_is_in_check()
         check_mark = '!' if is_in_check else ''
         return '{}{}{}{}'.format(symbol, attack_char, new_position, check_mark)
-
-
 
 
 class Pawn(Piece):

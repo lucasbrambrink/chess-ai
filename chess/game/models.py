@@ -6,6 +6,7 @@ from django.contrib.postgres.fields import JSONField, ArrayField
 import json
 from .utils import *
 from .api.v0.serializers import GameSerializer
+from .conf import BLACK, WHITE
 
 
 class Game(object):
@@ -42,7 +43,7 @@ class Game(object):
         for color in Piece.COLORS:
             for i, set_of_pieces in enumerate((self.FIRST_RANK,
                                                self.SECOND_RANK)):
-                rank = i + 1 if color == Piece.WHITE else 8 - i
+                rank = i + 1 if color == WHITE else 8 - i
                 self.initialize_rank(set_of_pieces, color, rank)
 
     def __iter__(self):
@@ -101,9 +102,14 @@ class Game(object):
         new_game.chat = Chat.objects.filter(game_instance__game_id=new_game.id).values_list('line', flat=True)
         return new_game
 
+    @classmethod
+    def load_from_id(cls, game_id):
+        game_instance = GameInstance.objects.get(game_id=game_id)
+        return cls.initialize_from_dict(game_instance.__dict__)
+
     @property
     def next_color(self):
-        next_ = Piece.BLACK if self.last_color_played == Piece.WHITE else Piece.WHITE
+        next_ = BLACK if self.last_color_played == WHITE else WHITE
         self.last_color_played = next_
         return next_
 

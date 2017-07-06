@@ -20,8 +20,7 @@ class GameCache(object):
         game = cache.get(game_id)
         if game is None:
             try:
-                game_instance = GameInstance.objects.get(game_id=game_id)
-                game = Game.initialize_from_dict(game_instance.__dict__)
+                game = Game.load_from_id(game_id)
                 cache.set(game.id, game)
             except GameInstance.DoesNotExist:
                 if raise_error:
@@ -107,6 +106,7 @@ class GameView(TemplateView):
 
 
 class SubmitMoveView(View):
+    DEBUG = True
 
     def post(self, request, game_id, color, **kwargs):
         game = GameCache.fetch(game_id)
@@ -114,7 +114,7 @@ class SubmitMoveView(View):
             raise ValueError('The game is not in cache!')
 
         redirect_response = redirect(reverse('live', args=(game.id, color)))
-        if game.last_color_played == color:
+        if not self.DEBUG and game.last_color_played == color:
             log.info('It is not your turn!')
             return redirect_response
 
@@ -122,7 +122,7 @@ class SubmitMoveView(View):
         if form.is_valid():
             try:
                 player_key = request.session[PLAYER_KEY]
-                if player_key != game.player_keys[color]:
+                if not self.DEBUG and player_key != game.player_keys[color]:
                     log.error('Wrong player key... %s vs %s' % (player_key, game.player_keys[color]))
                     return HttpResponseNotAllowed('You should not do that.')
                 game.move(form.cleaned_data['command'], game.next_color)
